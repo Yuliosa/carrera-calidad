@@ -1,33 +1,438 @@
-function sendToGoogleSheet(accuracy) {
-    const statusEl = document.getElementById('sending-status');
-    if (statusEl) {
-        statusEl.innerText = "⏳ Guardando resultado...";
-        statusEl.style.color = "#F59E0B";
-    }
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gran Premio de Calidad - Carrera de Trivia</title>
+    <!-- Tailwind CSS para diseño moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti para celebración final -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Inter:wght@400;600;700&display=swap');
+        
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
 
-    fetch(SCRIPT_URL, {
-        method: 'POST', 
-        mode: 'no-cors', 
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            fecha: new Date().toLocaleString(), 
-            nombre: playerData.name, 
-            numEmpleado: playerData.id, 
-            rol: playerData.role, 
-            nivel: playerData.level, 
-            aciertos: `${score}/${activeQuestions.length}`, 
-            precision: `${accuracy}%`, 
-            tiempo: totalSeconds 
-        })
-    }).then(() => {
-        if (statusEl) {
-            statusEl.innerText = "✅ ¡Registro guardado con éxito!";
-            statusEl.style.color = "#10B981";
+        /* Estilo de la pista de carreras */
+        .track-pattern {
+            background-color: #1e293b;
+            background-image: linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 20px 100%;
         }
-    }).catch(() => { 
-        if (statusEl) {
-            statusEl.innerText = "✅ ¡Registro enviado!"; 
-            statusEl.style.color = "#10B981"; 
+
+        .finish-line {
+            background: repeating-linear-gradient(
+                45deg,
+                #000,
+                #000 10px,
+                #fff 10px,
+                #fff 20px
+            );
         }
-    });
-}
+
+        /* Transición suave para el avance del auto */
+        .car-transition {
+            transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Animación de pulso para la opción elegida */
+        @keyframes pulse-select {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        .pulse-card { animation: pulse-select 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-inter min-h-screen flex flex-col justify-between">
+
+    <!-- ENCABEZADO / HEADER -->
+    <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700 p-4 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i data-lucide="trophy" class="text-amber-400 w-7 h-7"></i>
+                <h1 class="font-orbitron text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
+                    TRIVIA RUNNER PRO
+                </h1>
+            </div>
+            <div id="game-stats" class="hidden flex items-center space-x-6 text-sm font-semibold">
+                <div class="flex items-center space-x-2 text-slate-300">
+                    <i data-lucide="clock" class="w-4 h-4 text-cyan-400"></i>
+                    <span id="timer-display">00:00</span>
+                </div>
+                <div class="flex items-center space-x-2 text-slate-300">
+                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+                    <span id="score-display">0/0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="max-w-4xl mx-auto w-full p-4 flex-grow flex flex-col justify-center">
+
+        <!-- PANTALLA 1: REGISTRO Y SELECCIÓN DE NIVEL -->
+        <section id="registration-screen" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <h2 class="font-orbitron text-2xl md:text-3xl font-bold text-slate-100">Registro de Piloto</h2>
+                <p class="text-slate-400 text-sm">Ingresa tus datos e identifica tu nivel de calibración para iniciar la carrera.</p>
+            </div>
+
+            <form id="start-form" onsubmit="startGame(event)" class="space-y-4 max-w-md mx-auto">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Nombre Completo</label>
+                    <input type="text" id="player-name" required placeholder="Ej. Ana Martínez" 
+                           class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">ID / N° Empleado</label>
+                        <input type="text" id="player-id" required placeholder="Ej. 10294" 
+                               class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Rol / Área</label>
+                        <select id="player-role" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition">
+                            <option value="">Selecciona...</option>
+                            <option value="Agente">Agente de Operaciones</option>
+                            <option value="Analista de Calidad">Analista de Calidad</option>
+                            <option value="Supervisor">Supervisor de Operaciones</option>
+                            <option value="Capacitador">Capacitador / Trainer</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Nivel de Desafío (Dificultad)</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="game-level" value="Básico" checked class="peer sr-only">
+                            <div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center peer-checked:border-amber-400 peer-checked:bg-amber-400/10 transition">
+                                <div class="font-bold text-amber-400 text-sm">Básico</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">3 Preguntas</div>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="game-level" value="Intermedio" class="peer sr-only">
+                            <div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center peer-checked:border-amber-400 peer-checked:bg-amber-400/10 transition">
+                                <div class="font-bold text-amber-400 text-sm">Intermedio</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">6 Preguntas</div>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="game-level" value="Avanzado / Pro" class="peer sr-only">
+                            <div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center peer-checked:border-amber-400 peer-checked:bg-amber-400/10 transition">
+                                <div class="font-bold text-amber-400 text-sm">Pro</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">Todas</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" 
+                        class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-orbitron font-black py-4 rounded-xl shadow-lg transition transform active:scale-98 flex items-center justify-center space-x-2 text-lg mt-6">
+                    <span>¡INICIAR CARRERA!</span>
+                    <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                </button>
+            </form>
+        </section>
+
+        <!-- PANTALLA CARGANDO PREGUNTAS -->
+        <section id="loading-screen" class="hidden text-center py-16 space-y-4">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-400 border-t-transparent"></div>
+            <p class="text-slate-300 font-semibold text-lg">Cargando circuito desde Google Sheets...</p>
+        </section>
+
+        <!-- PANTALLA 2: JUEGO EN VIVO -->
+        <section id="game-screen" class="hidden space-y-6">
+            
+            <!-- PISTA DE CARRERAS -->
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl">
+                <div class="flex justify-between text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
+                    <span>Línea de Salida</span>
+                    <span>Progreso de Pista</span>
+                    <span>Meta 🏁</span>
+                </div>
+                <div class="relative h-16 track-pattern rounded-xl border border-slate-700 overflow-hidden flex items-center px-2">
+                    <!-- Meta -->
+                    <div class="absolute right-0 top-0 bottom-0 w-6 finish-line opacity-80"></div>
+                    <!-- Auto del Jugador -->
+                    <div id="car-player" class="absolute left-2 car-transition text-3xl filter drop-shadow-md z-10" style="left: 2%;">
+                        🏎️
+                    </div>
+                </div>
+            </div>
+
+            <!-- TARJETA DE PREGUNTA -->
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
+                <div class="flex justify-between items-center text-xs font-bold text-amber-400 uppercase tracking-widest">
+                    <span id="question-number">Pregunta 1 de 10</span>
+                    <span id="level-badge" class="bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full">Nivel: Básico</span>
+                </div>
+
+                <h3 id="question-text" class="text-lg md:text-xl font-bold text-slate-100 min-h-[3rem] flex items-center">
+                    Cargando pregunta...
+                </h3>
+
+                <!-- OPCIONES DE RESPUESTA -->
+                <div id="options-container" class="grid grid-cols-1 gap-3">
+                    <!-- Las opciones se generan dinámicamente -->
+                </div>
+            </div>
+        </section>
+
+        <!-- PANTALLA 3: RESULTADOS / PODIO -->
+        <section id="results-screen" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl text-center space-y-6">
+            <div class="inline-block p-4 bg-amber-400/10 rounded-full text-amber-400 mb-2">
+                <i data-lucide="award" class="w-16 h-16 mx-auto"></i>
+            </div>
+            
+            <div class="space-y-2">
+                <h2 class="font-orbitron text-3xl font-black text-slate-100">¡CARRERA FINALIZADA!</h2>
+                <p id="player-congrats" class="text-slate-300 font-semibold">¡Excelente desempeño en la pista!</p>
+            </div>
+
+            <!-- TABLERO DE MÉTRICAS -->
+            <div class="grid grid-cols-3 gap-4 max-w-md mx-auto bg-slate-900 border border-slate-700 rounded-xl p-4">
+                <div>
+                    <div class="text-xs text-slate-400 uppercase font-bold">Aciertos</div>
+                    <div id="final-score" class="font-orbitron text-xl font-bold text-amber-400 mt-1">0/0</div>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400 uppercase font-bold">Precisión</div>
+                    <div id="final-accuracy" class="font-orbitron text-xl font-bold text-emerald-400 mt-1">0%</div>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400 uppercase font-bold">Tiempo</div>
+                    <div id="final-time" class="font-orbitron text-xl font-bold text-cyan-400 mt-1">0s</div>
+                </div>
+            </div>
+
+            <!-- ESTADO DE ENVÍO A GOOGLE SHEETS -->
+            <div id="sending-status" class="text-sm font-semibold text-slate-400 pt-2">
+                ⏳ Guardando resultado en Google Sheets...
+            </div>
+
+            <button onclick="location.reload()" 
+                    class="bg-slate-700 hover:bg-slate-600 text-slate-100 font-orbitron font-bold py-3 px-8 rounded-xl transition transform active:scale-95 inline-flex items-center space-x-2">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                <span>JUGAR DE NUEVO</span>
+            </button>
+        </section>
+
+    </main>
+
+    <!-- PIE DE PÁGINA -->
+    <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800">
+        Sistema de Evaluación y Calibración Operativa • Gestión de Calidad
+    </footer>
+
+    <script>
+        // ==========================================
+        // 1. CONFIGURACIÓN DEL GOOGLE APPS SCRIPT
+        // ==========================================
+        // REEMPLAZA ESTA URL CON TU WEB APP URL DE GOOGLE APPS SCRIPT
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbycAn3K1W7J9E6dG-T9m0yS6Ua9J7UqH6O/exec";
+
+        // ==========================================
+        // 2. VARIABLES DE ESTADO
+        // ==========================================
+        let allQuestions = [];
+        let activeQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let totalSeconds = 0;
+        let timerInterval = null;
+
+        let playerData = {
+            name: '',
+            id: '',
+            role: '',
+            level: ''
+        };
+
+        // Lucide Icons Init
+        lucide.createIcons();
+
+        // Audio Effects (Sintetizados web)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(freq, duration) {
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e){}
+        }
+
+        // ==========================================
+        // 3. INICIO Y CARGA DE DATOS
+        // ==========================================
+        async function startGame(e) {
+            e.preventDefault();
+
+            playerData.name = document.getElementById('player-name').value.trim();
+            playerData.id = document.getElementById('player-id').value.trim();
+            playerData.role = document.getElementById('player-role').value;
+            playerData.level = document.querySelector('input[name="game-level"]:checked').value;
+
+            document.getElementById('registration-screen').classList.add('hidden');
+            document.getElementById('loading-screen').classList.remove('hidden');
+
+            try {
+                const response = await fetch(SCRIPT_URL);
+                allQuestions = await response.json();
+
+                // Filtrar según el nivel seleccionado
+                if (playerData.level === 'Básico') {
+                    activeQuestions = allQuestions.slice(0, 3);
+                } else if (playerData.level === 'Intermedio') {
+                    activeQuestions = allQuestions.slice(0, 6);
+                } else {
+                    activeQuestions = allQuestions; // Pro / Avanzado: Todas
+                }
+
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('game-screen').classList.remove('hidden');
+                document.getElementById('game-stats').classList.remove('hidden');
+                document.getElementById('level-badge').innerText = `Nivel: ${playerData.level}`;
+
+                startTimer();
+                renderQuestion();
+
+            } catch (error) {
+                alert("Error al cargar las preguntas de Google Sheets. Verifica la URL de tu script o la conexión a internet.");
+                location.reload();
+            }
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                totalSeconds++;
+                const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+                const secs = String(totalSeconds % 60).padStart(2, '0');
+                document.getElementById('timer-display').innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        // ==========================================
+        // 4. DESARROLLO DE LA TRIVIA
+        // ==========================================
+        function renderQuestion() {
+            const q = activeQuestions[currentQuestionIndex];
+            
+            document.getElementById('question-number').innerText = `Pregunta ${currentQuestionIndex + 1} de ${activeQuestions.length}`;
+            document.getElementById('score-display').innerText = `${score}/${activeQuestions.length}`;
+            document.getElementById('question-text').innerText = q.q;
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left bg-slate-900/80 hover:bg-slate-700/80 border border-slate-700/80 hover:border-amber-400/50 p-4 rounded-xl font-semibold transition text-slate-200 flex items-center justify-between group";
+                btn.onclick = () => selectOption(idx);
+                btn.innerHTML = `
+                    <span>${opt}</span>
+                    <span class="text-xs font-mono bg-slate-800 group-hover:bg-amber-400 group-hover:text-slate-950 px-2 py-1 rounded text-slate-400 transition">Opcion ${idx+1}</span>
+                `;
+                container.appendChild(btn);
+            });
+
+            // Actualizar posición del carrito
+            const progressPercent = (currentQuestionIndex / activeQuestions.length) * 85 + 2;
+            document.getElementById('car-player').style.left = `${progressPercent}%`;
+        }
+
+        function selectOption(selectedIdx) {
+            const q = activeQuestions[currentQuestionIndex];
+            const isCorrect = (selectedIdx === q.correct);
+
+            if (isCorrect) {
+                score++;
+                playSound(600, 0.1);
+            } else {
+                playSound(200, 0.2);
+            }
+
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < activeQuestions.length) {
+                renderQuestion();
+            } else {
+                finishGame();
+            }
+        }
+
+        // ==========================================
+        // 5. FINALIZACIÓN Y ENVÍO ASÍNCRONO
+        // ==========================================
+        function finishGame() {
+            clearInterval(timerInterval);
+            
+            // Auto a la meta
+            document.getElementById('car-player').style.left = '88%';
+
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('results-screen').classList.remove('hidden');
+
+            const accuracy = Math.round((score / activeQuestions.length) * 100);
+
+            document.getElementById('player-congrats').innerText = `¡Felicidades, ${playerData.name}! Has completado el circuito.`;
+            document.getElementById('final-score').innerText = `${score}/${activeQuestions.length}`;
+            document.getElementById('final-accuracy').innerText = `${accuracy}%`;
+            document.getElementById('final-time').innerText = `${totalSeconds}s`;
+
+            // Efecto de Confeti si aprueba con > 70%
+            if (accuracy >= 70) {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            }
+
+            // Envío asíncrono a Google Sheets sin congelar pantalla
+            sendToGoogleSheet(accuracy);
+        }
+
+        function sendToGoogleSheet(accuracy) {
+            const statusEl = document.getElementById('sending-status');
+            if (statusEl) {
+                statusEl.innerText = "⏳ Guardando resultado en Google Sheets...";
+                statusEl.style.color = "#F59E0B";
+            }
+
+            fetch(SCRIPT_URL, {
+                method: 'POST', 
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    fecha: new Date().toLocaleString(), 
+                    nombre: playerData.name, 
+                    numEmpleado: playerData.id, 
+                    rol: playerData.role, 
+                    nivel: playerData.level, 
+                    aciertos: `${score}/${activeQuestions.length}`, 
+                    precision: `${accuracy}%`, 
+                    tiempo: totalSeconds 
+                })
+            }).then(() => {
+                if (statusEl) {
+                    statusEl.innerText = "✅ ¡Registro guardado con éxito en Google Sheets!";
+                    statusEl.style.color = "#10B981";
+                }
+            }).catch(() => { 
+                if (statusEl) {
+                    statusEl.innerText = "✅ ¡Registro enviado a la hoja de cálculo!"; 
+                    statusEl.style.color = "#10B981"; 
+                }
+            });
+        }
+    </script>
+</body>
+</html>
