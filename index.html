@@ -37,17 +37,9 @@
         .car-transition {
             transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-
-        /* Animación de pulso para la opción elegida */
-        @keyframes pulse-select {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-        .pulse-card { animation: pulse-select 0.3s ease-in-out; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-inter min-h-screen flex flex-col justify-between">
+<body class="bg-slate-900 text-slate-100 font-inter min-h-screen flex flex-col justify-between" onload="initApp()">
 
     <!-- ENCABEZADO / HEADER -->
     <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700 p-4 sticky top-0 z-50">
@@ -74,8 +66,14 @@
     <!-- CONTENIDO PRINCIPAL -->
     <main class="max-w-4xl mx-auto w-full p-4 flex-grow flex flex-col justify-center">
 
+        <!-- PANTALLA CARGANDO INICIAL -->
+        <section id="loading-screen" class="text-center py-16 space-y-4">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-400 border-t-transparent"></div>
+            <p class="text-slate-300 font-semibold text-lg">Cargando preguntas desde Google Sheets...</p>
+        </section>
+
         <!-- PANTALLA 1: REGISTRO Y SELECCIÓN DE NIVEL -->
-        <section id="registration-screen" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
+        <section id="registration-screen" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
             <div class="text-center space-y-2">
                 <h2 class="font-orbitron text-2xl md:text-3xl font-bold text-slate-100">Registro de Piloto</h2>
                 <p class="text-slate-400 text-sm">Ingresa tus datos e identifica tu nivel de calibración para iniciar la carrera.</p>
@@ -113,21 +111,21 @@
                             <input type="radio" name="game-level" value="Básico" checked class="peer sr-only">
                             <div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center peer-checked:border-amber-400 peer-checked:bg-amber-400/10 transition">
                                 <div class="font-bold text-amber-400 text-sm">Básico</div>
-                                <div class="text-[10px] text-slate-400 mt-0.5">3 Preguntas</div>
+                                <div id="lbl-basic" class="text-[10px] text-slate-400 mt-0.5">Calculando...</div>
                             </div>
                         </label>
                         <label class="cursor-pointer">
                             <input type="radio" name="game-level" value="Intermedio" class="peer sr-only">
                             <div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center peer-checked:border-amber-400 peer-checked:bg-amber-400/10 transition">
                                 <div class="font-bold text-amber-400 text-sm">Intermedio</div>
-                                <div class="text-[10px] text-slate-400 mt-0.5">6 Preguntas</div>
+                                <div id="lbl-intermediate" class="text-[10px] text-slate-400 mt-0.5">Calculando...</div>
                             </div>
                         </label>
                         <label class="cursor-pointer">
                             <input type="radio" name="game-level" value="Avanzado / Pro" class="peer sr-only">
                             <div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center peer-checked:border-amber-400 peer-checked:bg-amber-400/10 transition">
                                 <div class="font-bold text-amber-400 text-sm">Pro</div>
-                                <div class="text-[10px] text-slate-400 mt-0.5">Todas</div>
+                                <div id="lbl-pro" class="text-[10px] text-slate-400 mt-0.5">Calculando...</div>
                             </div>
                         </label>
                     </div>
@@ -141,15 +139,8 @@
             </form>
         </section>
 
-        <!-- PANTALLA CARGANDO PREGUNTAS -->
-        <section id="loading-screen" class="hidden text-center py-16 space-y-4">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-400 border-t-transparent"></div>
-            <p class="text-slate-300 font-semibold text-lg">Cargando circuito desde Google Sheets...</p>
-        </section>
-
         <!-- PANTALLA 2: JUEGO EN VIVO -->
         <section id="game-screen" class="hidden space-y-6">
-            
             <!-- PISTA DE CARRERAS -->
             <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl">
                 <div class="flex justify-between text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
@@ -158,9 +149,7 @@
                     <span>Meta 🏁</span>
                 </div>
                 <div class="relative h-16 track-pattern rounded-xl border border-slate-700 overflow-hidden flex items-center px-2">
-                    <!-- Meta -->
                     <div class="absolute right-0 top-0 bottom-0 w-6 finish-line opacity-80"></div>
-                    <!-- Auto del Jugador -->
                     <div id="car-player" class="absolute left-2 car-transition text-3xl filter drop-shadow-md z-10" style="left: 2%;">
                         🏎️
                     </div>
@@ -179,9 +168,7 @@
                 </h3>
 
                 <!-- OPCIONES DE RESPUESTA -->
-                <div id="options-container" class="grid grid-cols-1 gap-3">
-                    <!-- Las opciones se generan dinámicamente -->
-                </div>
+                <div id="options-container" class="grid grid-cols-1 gap-3"></div>
             </div>
         </section>
 
@@ -212,6 +199,11 @@
                 </div>
             </div>
 
+            <!-- TARJETA MENSAJE DINÁMICO POR PORCENTAJE DE PRECISIÓN -->
+            <div id="feedback-card" class="max-w-md mx-auto p-4 rounded-xl border text-center transition-all">
+                <p id="feedback-message" class="text-sm md:text-base font-semibold">Cargando retroalimentación...</p>
+            </div>
+
             <!-- ESTADO DE ENVÍO A GOOGLE SHEETS -->
             <div id="sending-status" class="text-sm font-semibold text-slate-400 pt-2">
                 ⏳ Guardando resultado en Google Sheets...
@@ -235,8 +227,8 @@
         // ==========================================
         // 1. CONFIGURACIÓN DEL GOOGLE APPS SCRIPT
         // ==========================================
-        // REEMPLAZA ESTA URL CON TU WEB APP URL DE GOOGLE APPS SCRIPT
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwsapLSie1qKNtZ5EAok2j7trV_7OP7rjfBPEiTsdjGi1knH_M5cxEE4dD0GTA9x0KLHw/exec";
+        // REEMPLAZA ESTA URL CON TU WEB APP URL DESPLEGADA DE GOOGLE SHEETS
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCjdhak5cdBrwQozEppw7oAExbYSH1euqDyEGFOdMK-Ulzp5IK76LeHifQjjiNzzgnZA/exec";
 
         // ==========================================
         // 2. VARIABLES DE ESTADO
@@ -255,10 +247,9 @@
             level: ''
         };
 
-        // Lucide Icons Init
         lucide.createIcons();
 
-        // Audio Effects (Sintetizados web)
+        // Audio Effects
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(freq, duration) {
             try {
@@ -274,9 +265,33 @@
         }
 
         // ==========================================
-        // 3. INICIO Y CARGA DE DATOS
+        // 3. INICIALIZACIÓN DINÁMICA POR PORCENTAJE
         // ==========================================
-        async function startGame(e) {
+        async function initApp() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                allQuestions = await response.json();
+
+                const total = allQuestions.length;
+                
+                // Cálculo del 30% y 60% redondeado
+                const basicCount = Math.max(1, Math.round(total * 0.30));
+                const interCount = Math.max(1, Math.round(total * 0.60));
+
+                // Actualización de textos dinámicos en la pantalla de inicio
+                document.getElementById('lbl-basic').innerText = `${basicCount} Preguntas (30%)`;
+                document.getElementById('lbl-intermediate').innerText = `${interCount} Preguntas (60%)`;
+                document.getElementById('lbl-pro').innerText = `${total} Preguntas (100%)`;
+
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('registration-screen').classList.remove('hidden');
+
+            } catch (error) {
+                alert("Error al conectar con Google Sheets. Revisa tu URL de despliegue.");
+            }
+        }
+
+        function startGame(e) {
             e.preventDefault();
 
             playerData.name = document.getElementById('player-name').value.trim();
@@ -284,34 +299,26 @@
             playerData.role = document.getElementById('player-role').value;
             playerData.level = document.querySelector('input[name="game-level"]:checked').value;
 
-            document.getElementById('registration-screen').classList.add('hidden');
-            document.getElementById('loading-screen').classList.remove('hidden');
+            // Selección dinámica proporcional a la base total
+            const total = allQuestions.length;
 
-            try {
-                const response = await fetch(SCRIPT_URL);
-                allQuestions = await response.json();
-
-                // Filtrar según el nivel seleccionado
-                if (playerData.level === 'Básico') {
-                    activeQuestions = allQuestions.slice(0, 3);
-                } else if (playerData.level === 'Intermedio') {
-                    activeQuestions = allQuestions.slice(0, 6);
-                } else {
-                    activeQuestions = allQuestions; // Pro / Avanzado: Todas
-                }
-
-                document.getElementById('loading-screen').classList.add('hidden');
-                document.getElementById('game-screen').classList.remove('hidden');
-                document.getElementById('game-stats').classList.remove('hidden');
-                document.getElementById('level-badge').innerText = `Nivel: ${playerData.level}`;
-
-                startTimer();
-                renderQuestion();
-
-            } catch (error) {
-                alert("Error al cargar las preguntas de Google Sheets. Verifica la URL de tu script o la conexión a internet.");
-                location.reload();
+            if (playerData.level === 'Básico') {
+                const count = Math.max(1, Math.round(total * 0.30));
+                activeQuestions = allQuestions.slice(0, count);
+            } else if (playerData.level === 'Intermedio') {
+                const count = Math.max(1, Math.round(total * 0.60));
+                activeQuestions = allQuestions.slice(0, count);
+            } else {
+                activeQuestions = allQuestions; // Pro (100%)
             }
+
+            document.getElementById('registration-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('game-stats').classList.remove('hidden');
+            document.getElementById('level-badge').innerText = `Nivel: ${playerData.level}`;
+
+            startTimer();
+            renderQuestion();
         }
 
         function startTimer() {
@@ -342,12 +349,11 @@
                 btn.onclick = () => selectOption(idx);
                 btn.innerHTML = `
                     <span>${opt}</span>
-                    <span class="text-xs font-mono bg-slate-800 group-hover:bg-amber-400 group-hover:text-slate-950 px-2 py-1 rounded text-slate-400 transition">Opcion ${idx+1}</span>
+                    <span class="text-xs font-mono bg-slate-800 group-hover:bg-amber-400 group-hover:text-slate-950 px-2 py-1 rounded text-slate-400 transition">Opción ${idx+1}</span>
                 `;
                 container.appendChild(btn);
             });
 
-            // Actualizar posición del carrito
             const progressPercent = (currentQuestionIndex / activeQuestions.length) * 85 + 2;
             document.getElementById('car-player').style.left = `${progressPercent}%`;
         }
@@ -373,12 +379,11 @@
         }
 
         // ==========================================
-        // 5. FINALIZACIÓN Y ENVÍO ASÍNCRONO
+        // 5. FINALIZACIÓN Y RETROALIMENTACIÓN
         // ==========================================
         function finishGame() {
             clearInterval(timerInterval);
             
-            // Auto a la meta
             document.getElementById('car-player').style.left = '88%';
 
             document.getElementById('game-screen').classList.add('hidden');
@@ -391,12 +396,26 @@
             document.getElementById('final-accuracy').innerText = `${accuracy}%`;
             document.getElementById('final-time').innerText = `${totalSeconds}s`;
 
-            // Efecto de Confeti si aprueba con > 70%
-            if (accuracy >= 70) {
-                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            // MENSAJE DINÁMICO POR PORCENTAJE
+            const feedbackCard = document.getElementById('feedback-card');
+            const feedbackMsg = document.getElementById('feedback-message');
+
+            if (accuracy === 100) {
+                feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-emerald-500/50 bg-emerald-500/10 text-emerald-400 font-bold";
+                feedbackMsg.innerText = "🏆 ¡Calibración Impecable! Dominio total de los procesos y políticas de calidad.";
+                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+            } else if (accuracy >= 80) {
+                feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-cyan-500/50 bg-cyan-500/10 text-cyan-300 font-semibold";
+                feedbackMsg.innerText = "🥇 ¡Gran desempeño! Tienes un conocimiento muy sólido de la operación.";
+                confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+            } else if (accuracy >= 60) {
+                feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-amber-500/50 bg-amber-500/10 text-amber-300 font-medium";
+                feedbackMsg.innerText = "⚠️ ¡Buen esfuerzo! Hay algunos puntos específicos que vale la pena reforzar.";
+            } else {
+                feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-rose-500/50 bg-rose-500/10 text-rose-300 font-medium";
+                feedbackMsg.innerText = "🚨 Requiere Reforzamiento. Te recomendamos repasar los procedimientos con tu equipo de Calidad.";
             }
 
-            // Envío asíncrono a Google Sheets sin congelar pantalla
             sendToGoogleSheet(accuracy);
         }
 
