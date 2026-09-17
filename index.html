@@ -11,7 +11,891 @@
             --secondary: #10B981;
             --warning: #F59E0B;
             --danger: #EF4444;
+            --bg-dark: #0F172A;<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrera de Calidad Pro & Procesos</title>
+    <style>
+        :root {
+            --primary: #6366F1;
+            --primary-dark: #4338CA;
+            --secondary: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
             --bg-dark: #0F172A;
+            --card-bg: #1E293B;
+            --card-border: #334155;
+            --text-light: #F8FAFC;
+            --text-muted: #94A3B8;
+            --accent: #EC4899;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 520px;
+            background-color: var(--card-bg);
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .header-title {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #818CF8, #C084FC, #F472B6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Track UI */
+        .track-container {
+            background-color: #0B1120;
+            border-radius: 16px;
+            padding: 16px;
+            border: 2px solid var(--card-border);
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .track-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .track-bar-bg {
+            height: 28px;
+            background-color: #1E293B;
+            border-radius: 14px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #475569;
+        }
+
+        .track-progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #10B981, #34D399, #60A5FA);
+            border-radius: 14px;
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .racer-icon {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.8rem;
+            transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+        }
+
+        /* Form Controls */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        input[type="text"], select {
+            background-color: #0B1120;
+            border: 1px solid var(--card-border);
+            padding: 14px 16px;
+            border-radius: 12px;
+            color: var(--text-light);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+        }
+
+        .avatar-selection {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 6px;
+        }
+
+        .avatar-opt {
+            font-size: 2rem;
+            padding: 10px 14px;
+            border-radius: 16px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            background-color: #0B1120;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .avatar-opt.selected {
+            border-color: var(--primary);
+            background-color: #312E81;
+            transform: scale(1.15);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+        }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--card-border);
+            color: var(--text-muted);
+            box-shadow: none;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--text-light);
+        }
+
+        /* Game Mechanics */
+        .q-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .q-card {
+            background-color: #0B1120;
+            padding: 20px;
+            border-radius: 16px;
+            border-left: 5px solid var(--primary);
+            font-size: 1.05rem;
+            font-weight: 600;
+            line-height: 1.5;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .opt-btn {
+            background-color: #0B1120;
+            border: 2px solid var(--card-border);
+            padding: 14px 18px;
+            border-radius: 14px;
+            color: var(--text-light);
+            font-size: 0.95rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .opt-btn:not(:disabled):hover {
+            border-color: var(--primary);
+            background-color: #1E1B4B;
+            transform: translateX(4px);
+        }
+
+        .opt-btn.correct {
+            border-color: var(--secondary) !important;
+            background-color: #064E3B !important;
+            color: white;
+            font-weight: bold;
+        }
+
+        .opt-btn.incorrect {
+            border-color: var(--danger) !important;
+            background-color: #7F1D1D !important;
+            color: white;
+        }
+
+        .feedback {
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            text-align: center;
+            font-weight: 700;
+            display: none;
+            animation: bounceIn 0.3s ease;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .feedback.correct {
+            display: block;
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--secondary);
+            border: 1px solid var(--secondary);
+        }
+
+        .feedback.incorrect {
+            display: block;
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        /* Result Screen */
+        .podium {
+            text-align: center;
+        }
+
+        .trophy {
+            font-size: 4rem;
+            margin-bottom: 5px;
+            filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.5));
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .stats-card {
+            background-color: #0B1120;
+            border-radius: 16px;
+            padding: 18px;
+            display: flex;
+            justify-content: space-around;
+            border: 1px solid var(--card-border);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-lbl {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .status-msg {
+            font-size: 0.85rem;
+            text-align: center;
+            color: var(--secondary);
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 10px;
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+
+        /* Modal for Question Editor */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 15px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 480px;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid var(--card-border);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Canvas for Confetti */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 99;
+        }
+
+        .sound-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="container">
+        <button class="sound-toggle" id="sound-btn" onclick="toggleSound()" title="Activar/Desactivar Sonido">🔊</button>
+        
+        <!-- PANTALLA 1: REGISTRO -->
+        <div id="screen-welcome" class="screen active">
+            <div>
+                <h1 class="header-title">Carrera de Calidad Pro</h1>
+                <p class="subtitle">Refuerzo Operativo & Evaluación Interactiva</p>
+            </div>
+
+            <div class="input-group">
+                <label for="player-name">Nombre y Apellido *</label>
+                <input type="text" id="player-name" placeholder="Ej. Ana Martínez" required>
+            </div>
+
+            <div class="input-group">
+                <label for="player-id">Número de Empleado / ID *</label>
+                <input type="text" id="player-id" placeholder="Ej. EMP-10482" required>
+            </div>
+
+            <div class="input-group">
+                <label for="player-role">Área / Campaña</label>
+                <select id="player-role">
+                    <option value="Agente / Operaciones">Agente / Operaciones</option>
+                    <option value="Analista de Calidad">Analista de Calidad</option>
+                    <option value="Supervisor / Team Leader">Supervisor / Team Leader</option>
+                    <option value="Capacitación / Trainer">Capacitación / Trainer</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Selecciona tu Vehículo:</label>
+                <div class="avatar-selection">
+                    <div class="avatar-opt selected" onclick="selectAvatar(this, '🏎️')">🏎️</div>
+                    <div class="avatar-opt" onclick="selectAvatar(this, '🚀')">🚀</div>
+                    <div class="avatar-opt" onclick="selectAvatar(this, '🏍️')">🏍️</div>
+                    <div class="avatar-opt" onclick="selectAvatar(this, '⚡')">⚡</div>
+                </div>
+            </div>
+
+            <button class="btn" onclick="startGame()">¡Comenzar Carrera!</button>
+            <button class="btn btn-outline" onclick="openQuestionEditor()">⚙️ Personalizar Preguntas</button>
+        </div>
+
+        <!-- PANTALLA 2: JUEGO EN CURSO -->
+        <div id="screen-game" class="screen">
+            <div class="track-container">
+                <div class="track-labels">
+                    <span>SALIDA</span>
+                    <span id="player-display-name">Piloto</span>
+                    <span>META 🏁</span>
+                </div>
+                <div class="track-bar-bg">
+                    <div id="track-progress" class="track-progress"></div>
+                    <div id="racer-icon" class="racer-icon" style="left: 0%;">🏎️</div>
+                </div>
+            </div>
+
+            <div class="q-meta">
+                <span id="q-number">Pregunta 1/5</span>
+                <span id="timer-display">⏱️ 00:00</span>
+            </div>
+
+            <div id="q-text" class="q-card">Cargando pregunta...</div>
+
+            <div id="options-container" class="options-grid"></div>
+
+            <div id="feedback" class="feedback"></div>
+
+            <button id="next-btn" class="btn" style="display: none;" onclick="nextQuestion()">Siguiente Avance ➔</button>
+        </div>
+
+        <!-- PANTALLA 3: RESULTADOS -->
+        <div id="screen-result" class="screen">
+            <div class="podium">
+                <div class="trophy">🏆</div>
+                <h2 style="font-size: 1.5rem;" id="result-title">¡Llegaste a la Meta!</h2>
+                <p class="subtitle" id="result-subtitle">Evaluación guardada automáticamente</p>
+            </div>
+
+            <div class="stats-card">
+                <div class="stat-item">
+                    <div id="stat-score" class="stat-val">0</div>
+                    <div class="stat-lbl">Aciertos</div>
+                </div>
+                <div class="stat-item">
+                    <div id="stat-time" class="stat-val">0s</div>
+                    <div class="stat-lbl">Tiempo</div>
+                </div>
+                <div class="stat-item">
+                    <div id="stat-accuracy" class="stat-val">0%</div>
+                    <div class="stat-lbl">Precisión</div>
+                </div>
+            </div>
+
+            <div id="sending-status" class="status-msg">💾 Registrando en Google Sheets...</div>
+
+            <button class="btn" onclick="restartGame()">Volver a Jugar</button>
+        </div>
+
+    </div>
+
+    <!-- MODAL EDITOR DE PREGUNTAS -->
+    <div id="editor-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="font-size: 1.3rem; text-align: center;">⚙️ Editor de Preguntas</h2>
+            <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center;">Puedes usar las preguntas por defecto o editarlas para tu sesión de hoy.</p>
+            
+            <div id="questions-list-editor" style="display:flex; flex-direction:column; gap:10px;"></div>
+
+            <button class="btn" onclick="saveCustomQuestions()">Guardar y Aplicar</button>
+            <button class="btn btn-outline" onclick="resetDefaultQuestions()">Restablecer Originales</button>
+            <button class="btn btn-outline" onclick="closeQuestionEditor()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN GLOBAL
+        const DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbxKBl3dxR-i46MVrV1xImeCCrxV26PHbyI8VOoaqYoY4VLPISIuJWROE265U6m49O1JpQ/exec";
+
+        const baseQuestions = [
+            {
+                q: "¿Qué tipo de error se considera cuando un agente proporciona información falsa o incorrecta al cliente?",
+                options: [
+                    "Error Fatal de Negocio / Calidad",
+                    "Error No Fatal de Formato",
+                    "Falta de Habilidades Blandas",
+                    "Oportunidad de Mejora Menor"
+                ],
+                correct: 0
+            },
+            {
+                q: "Durante una evaluación de llamada, ¿cuál es el objetivo principal del proceso de 'Calibración'?",
+                options: [
+                    "Castigar los errores del equipo",
+                    "Alinear criterios de evaluación entre analistas y supervisores",
+                    "Aumentar la duración media de las llamadas (AHT)",
+                    "Filtrar las llamadas más cortas"
+                ],
+                correct: 1
+            },
+            {
+                q: "Si el cliente demuestra frustración o molestia, ¿qué habilidad blanda debe priorizar el agente?",
+                options: [
+                    "Empatía y Escucha Activa",
+                    "Rapidez para colgar la llamada",
+                    "Repetir el script sin cambios",
+                    "Transferir inmediatamente al cliente"
+                ],
+                correct: 0
+            },
+            {
+                q: "¿Qué se debe validar obligatoriamente al inicio de la llamada según el protocolo de seguridad/OTP?",
+                options: [
+                    "La opinión del cliente sobre el servicio",
+                    "La autenticación e identidad del titular de la cuenta",
+                    "La velocidad de la conexión del cliente",
+                    "El historial completo de compras"
+                ],
+                correct: 1
+            },
+            {
+                q: "¿Cuál es la forma correcta de realizar la 'Tipificación' del caso en el CRM?",
+                options: [
+                    "Al finalizar la jornada laboral",
+                    "Seleccionando la primera opción de la lista",
+                    "Registrando el motivo real y la resolución exacta antes de cerrar el contacto",
+                    "Dejar la nota en blanco si la llamada fue breve"
+                ],
+                correct: 2
+            }
+        ];
+
+        let questions = JSON.parse(localStorage.getItem('custom_questions')) || baseQuestions;
+        let currentQuestionIdx = 0;
+        let score = 0;
+        let selectedAvatar = '🏎️';
+        let startTime, timerInterval, totalSeconds = 0;
+        let playerData = {};
+        let soundEnabled = true;
+
+        // EFECTOS DE SONIDO SINTETIZADOS (Sin archivos externos)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.exponentialRampToValueAtTime(659.25, audioCtx.currentTime + 0.15); // E5
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'incorrect') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+                    osc.frequency.exponentialRampToValueAtTime(130.81, audioCtx.currentTime + 0.2); // C3
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.25);
+                } else if (type === 'win') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.4);
+                    gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.5);
+                }
+            } catch(e) {}
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-btn').innerText = soundEnabled ? '🔊' : '🔇';
+        }
+
+        function selectAvatar(element, icon) {
+            document.querySelectorAll('.avatar-opt').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedAvatar = icon;
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function startGame() {
+            const name = document.getElementById('player-name').value.trim();
+            const id = document.getElementById('player-id').value.trim();
+            const role = document.getElementById('player-role').value;
+
+            if (!name || !id) {
+                alert("Por favor ingresa tu Nombre y Número de Empleado para continuar.");
+                return;
+            }
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            playerData = { name, id, role };
+            document.getElementById('player-display-name').innerText = name.split(' ')[0];
+            document.getElementById('racer-icon').innerText = selectedAvatar;
+
+            currentQuestionIdx = 0;
+            score = 0;
+            totalSeconds = 0;
+
+            updateTrackPosition();
+            showScreen('screen-game');
+            startTimer();
+            loadQuestion();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                totalSeconds = Math.floor((Date.now() - startTime) / 1000);
+                const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+                const secs = String(totalSeconds % 60).padStart(2, '0');
+                document.getElementById('timer-display').innerText = `⏱️ ${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function loadQuestion() {
+            const qData = questions[currentQuestionIdx];
+            document.getElementById('q-number').innerText = `Pregunta ${currentQuestionIdx + 1}/${questions.length}`;
+            document.getElementById('q-text').innerText = qData.q;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            const feedbackEl = document.getElementById('feedback');
+            feedbackEl.className = 'feedback';
+            feedbackEl.style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+
+            qData.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.innerText = opt;
+                btn.onclick = () => selectOption(idx, qData.correct);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectOption(selectedIdx, correctIdx) {
+            const buttons = document.querySelectorAll('.opt-btn');
+            buttons.forEach(btn => btn.disabled = true);
+
+            const feedbackEl = document.getElementById('feedback');
+
+            if (selectedIdx === correctIdx) {
+                buttons[selectedIdx].classList.add('correct');
+                feedbackEl.innerText = "¡Excelente! Respuesta Correcta 🚀";
+                feedbackEl.className = "feedback correct";
+                score++;
+                playSound('correct');
+                updateTrackPosition();
+            } else {
+                buttons[selectedIdx].classList.add('incorrect');
+                buttons[correctIdx].classList.add('correct');
+                feedbackEl.innerText = "Respuesta incorrecta ❌";
+                feedbackEl.className = "feedback incorrect";
+                playSound('incorrect');
+            }
+
+            document.getElementById('next-btn').style.display = 'block';
+        }
+
+        function updateTrackPosition() {
+            const progressPct = (score / questions.length) * 100;
+            document.getElementById('track-progress').style.width = `${progressPct}%`;
+            document.getElementById('racer-icon').style.left = `${progressPct}%`;
+        }
+
+        function nextQuestion() {
+            currentQuestionIdx++;
+            if (currentQuestionIdx < questions.length) {
+                loadQuestion();
+            } else {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            showScreen('screen-result');
+
+            const accuracy = Math.round((score / questions.length) * 100);
+            document.getElementById('stat-score').innerText = `${score}/${questions.length}`;
+            document.getElementById('stat-time').innerText = `${totalSeconds}s`;
+            document.getElementById('stat-accuracy').innerText = `${accuracy}%`;
+
+            playSound('win');
+            triggerConfetti();
+            sendToGoogleSheet(accuracy);
+        }
+
+        function sendToGoogleSheet(accuracy) {
+            const statusEl = document.getElementById('sending-status');
+
+            const payload = {
+                fecha: new Date().toLocaleString(),
+                nombre: playerData.name,
+                numEmpleado: playerData.id,
+                rol: playerData.role,
+                aciertos: `${score}/${questions.length}`,
+                precision: `${accuracy}%`,
+                tiempo: totalSeconds
+            };
+
+            fetch(DEFAULT_SHEET_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                statusEl.innerText = "✅ ¡Registro guardado con éxito en el Google Sheet!";
+                statusEl.style.color = "#10B981";
+            }).catch(err => {
+                statusEl.innerText = "❌ Error al enviar datos al Sheet.";
+                statusEl.style.color = "#EF4444";
+            });
+        }
+
+        function restartGame() {
+            showScreen('screen-welcome');
+        }
+
+        /* EDITOR DE PREGUNTAS */
+        function openQuestionEditor() {
+            const container = document.getElementById('questions-list-editor');
+            container.innerHTML = '';
+            
+            questions.forEach((q, qIdx) => {
+                const item = document.createElement('div');
+                item.style.cssText = "background:#0B1120; padding:12px; border-radius:10px; border:1px solid var(--card-border);";
+                item.innerHTML = `
+                    <label>Pregunta ${qIdx + 1}:</label>
+                    <input type="text" id="edit-q-${qIdx}" value="${q.q}" style="width:100%; margin-bottom:8px;">
+                `;
+                container.appendChild(item);
+            });
+
+            document.getElementById('editor-modal').classList.add('active');
+        }
+
+        function closeQuestionEditor() {
+            document.getElementById('editor-modal').classList.remove('active');
+        }
+
+        function saveCustomQuestions() {
+            questions.forEach((q, qIdx) => {
+                const val = document.getElementById(`edit-q-${qIdx}`).value.trim();
+                if (val) q.q = val;
+            });
+            localStorage.setItem('custom_questions', JSON.stringify(questions));
+            closeQuestionEditor();
+            alert("¡Preguntas actualizadas correctamente!");
+        }
+
+        function resetDefaultQuestions() {
+            localStorage.removeItem('custom_questions');
+            questions = baseQuestions;
+            closeQuestionEditor();
+            alert("Se han restablecido las preguntas originales.");
+        }
+
+        /* CONFETTI ANIMATION */
+        function triggerConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#6366F1', '#10B981', '#F59E0B', '#EC4899', '#3B82F6'];
+
+            for (let i = 0; i < 80; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vy: Math.random() * 3 + 2,
+                    vx: Math.random() * 2 - 1
+                });
+            }
+
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach((p, idx) => {
+                    p.y += p.vy;
+                    p.x += p.vx;
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x, p.y, p.size, p.size);
+                });
+
+                if (particles.some(p => p.y < canvas.height)) {
+                    requestAnimationFrame(render);
+                }
+            }
+            render();
+        }
+    </script>
+</body>
+</html>
+
             --card-bg: #1E293B;
             --text-light: #F8FAFC;
             --text-muted: #94A3B8;
