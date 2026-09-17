@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carrera de Calidad Pro & Procesos</title>
+    <title>Carrera de Calidad Pro</title>
     <style>
         :root {
             --primary: #6366F1;
@@ -41,9 +41,9 @@
         .avatar-opt.selected { border-color: var(--primary); background-color: #312E81; transform: scale(1.15); }
 
         .btn { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; padding: 15px; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; text-align: center; }
-        .btn-outline { background: transparent; border: 2px solid var(--card-border); color: var(--text-muted); }
-
+        
         .q-meta { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+        .level-badge { background-color: #312E81; color: #818CF8; padding: 4px 10px; border-radius: 8px; font-weight: bold; font-size: 0.8rem; }
         .q-card { background-color: #0B1120; padding: 20px; border-radius: 16px; border-left: 5px solid var(--primary); font-size: 1.05rem; font-weight: 600; }
         .options-grid { display: flex; flex-direction: column; gap: 12px; }
         .opt-btn { background-color: #0B1120; border: 2px solid var(--card-border); padding: 14px; border-radius: 14px; color: var(--text-light); font-size: 0.95rem; text-align: left; cursor: pointer; }
@@ -58,12 +58,7 @@
         .stat-val { font-size: 1.4rem; font-weight: 800; color: var(--primary); text-align: center; }
         .stat-lbl { font-size: 0.75rem; color: var(--text-muted); text-align: center; }
         .status-msg { font-size: 0.85rem; text-align: center; color: var(--secondary); font-weight: bold; }
-
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 100; padding: 15px; }
-        .modal.active { display: flex; }
-        .modal-content { background: var(--card-bg); border-radius: 20px; padding: 24px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
         #confetti-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99; }
-        .sound-toggle { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); color: var(--text-muted); border-radius: 50%; width: 36px; height: 36px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -71,8 +66,6 @@
     <canvas id="confetti-canvas"></canvas>
 
     <div class="container">
-        <button class="sound-toggle" id="sound-btn" onclick="toggleSound()">🔊</button>
-        
         <!-- PANTALLA 1: REGISTRO -->
         <div id="screen-welcome" class="screen active">
             <div>
@@ -101,6 +94,15 @@
             </div>
 
             <div class="input-group">
+                <label for="player-level">Nivel de Dificultad</label>
+                <select id="player-level">
+                    <option value="Nivel 1 - Básico">Nivel 1 - Básico (Preguntas 1 a 3)</option>
+                    <option value="Nivel 2 - Intermedio">Nivel 2 - Intermedio (Preguntas 1 a 6)</option>
+                    <option value="Nivel 3 - Pro / Avanzado">Nivel 3 - Pro / Avanzado (Todas)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
                 <label>Selecciona tu Vehículo:</label>
                 <div class="avatar-selection">
                     <div class="avatar-opt selected" onclick="selectAvatar(this, '🏎️')">🏎️</div>
@@ -111,7 +113,6 @@
             </div>
 
             <button class="btn" onclick="startGame()">¡Comenzar Carrera!</button>
-            <button class="btn btn-outline" onclick="openQuestionEditor()">⚙️ Personalizar Preguntas</button>
         </div>
 
         <!-- PANTALLA 2: JUEGO -->
@@ -130,10 +131,11 @@
 
             <div class="q-meta">
                 <span id="q-number">Pregunta 1/5</span>
+                <span id="level-display" class="level-badge">Nivel 1</span>
                 <span id="timer-display">⏱️ 00:00</span>
             </div>
 
-            <div id="q-text" class="q-card">Cargando pregunta...</div>
+            <div id="q-text" class="q-card">Cargando preguntas desde Google Sheets...</div>
             <div id="options-container" class="options-grid"></div>
             <div id="feedback" class="feedback"></div>
 
@@ -168,72 +170,66 @@
         </div>
     </div>
 
-    <!-- MODAL EDITOR DE PREGUNTAS -->
-    <div id="editor-modal" class="modal">
-        <div class="modal-content">
-            <h2 style="font-size: 1.3rem; text-align: center;">⚙️ Editor de Preguntas</h2>
-            <div id="questions-list-editor" style="display:flex; flex-direction:column; gap:10px;"></div>
-            <button class="btn" onclick="saveCustomQuestions()">Guardar y Aplicar</button>
-            <button class="btn btn-outline" onclick="resetDefaultQuestions()">Restablecer Originales</button>
-            <button class="btn btn-outline" onclick="closeQuestionEditor()">Cancelar</button>
-        </div>
-    </div>
-
     <script>
-        const DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbxKBl3dxR-i46MVrV1xImeCCrxV26PHbyI8VOoaqYoY4VLPISIuJWROE265U6m49O1JpQ/exec";
+        // PEGA AQUÍ LA URL DESPLEGADA DE TU GOOGLE APPS SCRIPT
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9KVs4h9fDqUqut7W2VSDkxFAUxQ52WN3RNsq_CkjgMNy3_VP7l3Vr2OFUljl4yKPRtg/exec";
 
-        const baseQuestions = [
-            { q: "¿Qué tipo de error se considera cuando un agente proporciona información falsa al cliente?", options: ["Error Fatal de Negocio / Calidad", "Error No Fatal de Formato", "Falta de Habilidades Blandas", "Oportunidad de Mejora Menor"], correct: 0 },
-            { q: "Durante una evaluación de llamada, ¿cuál es el objetivo principal del proceso de 'Calibración'?", options: ["Castigar los errores del equipo", "Alinear criterios de evaluación entre analistas y supervisores", "Aumentar la duración media de las llamadas", "Filtrar llamadas cortas"], correct: 1 },
-            { q: "Si el cliente demuestra frustración, ¿qué habilidad blanda debe priorizar el agente?", options: ["Empatía y Escucha Activa", "Rapidez para colgar", "Repetir el script sin cambios", "Transferir inmediatamente"], correct: 0 },
-            { q: "¿Qué se debe validar obligatoriamente al inicio de la llamada según el protocolo de seguridad?", options: ["La opinión del cliente", "La autenticación e identidad del titular", "La velocidad de conexión", "El historial de compras"], correct: 1 },
-            { q: "¿Cuál es la forma correcta de realizar la 'Tipificación' del caso en el CRM?", options: ["Al finalizar la jornada", "Seleccionar la primera opción", "Registrar motivo real y resolución exacta antes de cerrar", "Dejar en blanco"], correct: 2 }
-        ];
-
-        let questions = JSON.parse(localStorage.getItem('custom_questions')) || baseQuestions;
+        let questions = [];
+        let activeQuestions = [];
         let currentQuestionIdx = 0, score = 0, selectedAvatar = '🏎️';
-        let startTime, timerInterval, totalSeconds = 0, playerData = {}, soundEnabled = true;
+        let startTime, timerInterval, totalSeconds = 0, playerData = {};
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-        function playSound(type) {
-            if (!soundEnabled) return;
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                if (type === 'correct') {
-                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(659.25, audioCtx.currentTime + 0.15);
-                } else if (type === 'incorrect') {
-                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(220, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(130.81, audioCtx.currentTime + 0.2);
-                } else {
-                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.4);
-                }
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-            } catch(e) {}
+        function selectAvatar(el, icon) {
+            document.querySelectorAll('.avatar-opt').forEach(a => a.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedAvatar = icon;
         }
 
-        function toggleSound() { soundEnabled = !soundEnabled; document.getElementById('sound-btn').innerText = soundEnabled ? '🔊' : '🔇'; }
-        function selectAvatar(el, icon) { document.querySelectorAll('.avatar-opt').forEach(a => a.classList.remove('selected')); el.classList.add('selected'); selectedAvatar = icon; }
-        function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
 
-        function startGame() {
+        async function fetchQuestionsFromSheet() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    questions = data;
+                }
+            } catch (error) {
+                console.log("Cargando preguntas de respaldo...");
+                questions = [
+                    { q: "¿Qué tipo de error se considera cuando un agente proporciona información falsa al cliente?", options: ["Error Fatal", "Error No Fatal", "Falta de Habilidades", "Mejora Menor"], correct: 0 },
+                    { q: "¿Cuál es el objetivo principal de la Calibración?", options: ["Castigar errores", "Alinear criterios de evaluación", "Aumentar TMO", "Filtrar llamadas"], correct: 1 },
+                    { q: "Si el cliente demuestra frustración, ¿qué habilidad priorizar?", options: ["Empatía", "Colgar rápido", "Repetir script", "Transferir"], correct: 0 }
+                ];
+            }
+        }
+
+        async function startGame() {
             const name = document.getElementById('player-name').value.trim();
             const id = document.getElementById('player-id').value.trim();
+            const level = document.getElementById('player-level').value;
+
             if (!name || !id) return alert("Ingresa tu Nombre y Número de Empleado.");
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            
-            playerData = { name, id, role: document.getElementById('player-role').value };
+
+            playerData = { name, id, role: document.getElementById('player-role').value, level };
             document.getElementById('player-display-name').innerText = name.split(' ')[0];
             document.getElementById('racer-icon').innerText = selectedAvatar;
+            document.getElementById('level-display').innerText = level.split(' - ')[0];
+
+            showScreen('screen-game');
+            await fetchQuestionsFromSheet();
+
+            if (level.includes("Nivel 1")) activeQuestions = questions.slice(0, 3);
+            else if (level.includes("Nivel 2")) activeQuestions = questions.slice(0, 6);
+            else activeQuestions = questions;
+
+            if(activeQuestions.length === 0) activeQuestions = questions;
+
             currentQuestionIdx = 0; score = 0; totalSeconds = 0;
-            
-            updateTrackPosition(); showScreen('screen-game'); startTimer(); loadQuestion();
+            updateTrackPosition(); startTimer(); loadQuestion();
         }
 
         function startTimer() {
@@ -247,8 +243,8 @@
         }
 
         function loadQuestion() {
-            const qData = questions[currentQuestionIdx];
-            document.getElementById('q-number').innerText = `Pregunta ${currentQuestionIdx + 1}/${questions.length}`;
+            const qData = activeQuestions[currentQuestionIdx];
+            document.getElementById('q-number').innerText = `Pregunta ${currentQuestionIdx + 1}/${activeQuestions.length}`;
             document.getElementById('q-text').innerText = qData.q;
             const container = document.getElementById('options-container');
             container.innerHTML = '';
@@ -269,42 +265,41 @@
             if (selected === correct) {
                 document.querySelectorAll('.opt-btn')[selected].classList.add('correct');
                 fb.innerText = "¡Excelente! Respuesta Correcta 🚀"; fb.className = "feedback correct";
-                score++; playSound('correct'); updateTrackPosition();
+                score++; updateTrackPosition();
             } else {
                 document.querySelectorAll('.opt-btn')[selected].classList.add('incorrect');
                 document.querySelectorAll('.opt-btn')[correct].classList.add('correct');
                 fb.innerText = "Respuesta incorrecta ❌"; fb.className = "feedback incorrect";
-                playSound('incorrect');
             }
             document.getElementById('next-btn').style.display = 'block';
         }
 
         function updateTrackPosition() {
-            const pct = (score / questions.length) * 100;
+            const pct = (score / activeQuestions.length) * 100;
             document.getElementById('track-progress').style.width = `${pct}%`;
             document.getElementById('racer-icon').style.left = `${pct}%`;
         }
 
         function nextQuestion() {
             currentQuestionIdx++;
-            if (currentQuestionIdx < questions.length) loadQuestion();
+            if (currentQuestionIdx < activeQuestions.length) loadQuestion();
             else endGame();
         }
 
         function endGame() {
             clearInterval(timerInterval); showScreen('screen-result');
-            const accuracy = Math.round((score / questions.length) * 100);
-            document.getElementById('stat-score').innerText = `${score}/${questions.length}`;
+            const accuracy = Math.round((score / activeQuestions.length) * 100);
+            document.getElementById('stat-score').innerText = `${score}/${activeQuestions.length}`;
             document.getElementById('stat-time').innerText = `${totalSeconds}s`;
             document.getElementById('stat-accuracy').innerText = `${accuracy}%`;
-            playSound('win'); triggerConfetti(); sendToGoogleSheet(accuracy);
+            triggerConfetti(); sendToGoogleSheet(accuracy);
         }
 
         function sendToGoogleSheet(accuracy) {
             const statusEl = document.getElementById('sending-status');
-            fetch(DEFAULT_SHEET_URL, {
+            fetch(SCRIPT_URL, {
                 method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fecha: new Date().toLocaleString(), nombre: playerData.name, numEmpleado: playerData.id, rol: playerData.role, aciertos: `${score}/${questions.length}`, precision: `${accuracy}%`, tiempo: totalSeconds })
+                body: JSON.stringify({ fecha: new Date().toLocaleString(), nombre: playerData.name, numEmpleado: playerData.id, rol: `${playerData.role} (${playerData.level})`, aciertos: `${score}/${activeQuestions.length}`, precision: `${accuracy}%`, tiempo: totalSeconds })
             }).then(() => {
                 statusEl.innerText = "✅ ¡Registro guardado con éxito en Google Sheet!";
                 statusEl.style.color = "#10B981";
@@ -312,21 +307,6 @@
         }
 
         function restartGame() { showScreen('screen-welcome'); }
-        function openQuestionEditor() {
-            const container = document.getElementById('questions-list-editor'); container.innerHTML = '';
-            questions.forEach((q, i) => {
-                const div = document.createElement('div');
-                div.innerHTML = `<label>Pregunta ${i + 1}:</label><input type="text" id="edit-q-${i}" value="${q.q}" style="width:100%;">`;
-                container.appendChild(div);
-            });
-            document.getElementById('editor-modal').classList.add('active');
-        }
-        function closeQuestionEditor() { document.getElementById('editor-modal').classList.remove('active'); }
-        function saveCustomQuestions() {
-            questions.forEach((q, i) => { const v = document.getElementById(`edit-q-${i}`).value.trim(); if (v) q.q = v; });
-            localStorage.setItem('custom_questions', JSON.stringify(questions)); closeQuestionEditor();
-        }
-        function resetDefaultQuestions() { localStorage.removeItem('custom_questions'); questions = baseQuestions; closeQuestionEditor(); }
 
         function triggerConfetti() {
             const canvas = document.getElementById('confetti-canvas'), ctx = canvas.getContext('2d');
