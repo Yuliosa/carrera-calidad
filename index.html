@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrera de Calidad & Procesos</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-dark: #3730A3;
+            --secondary: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --bg-dark: #0F172A;
+            --card-bg: #1E293B;
+            --text-light: #F8FAFC;
+            --text-muted: #94A3B8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .header-title {
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6366F1, #A855F7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Track UI */
+        .track-container {
+            background-color: #0F172A;
+            border-radius: 12px;
+            padding: 15px;
+            border: 2px solid #334155;
+            position: relative;
+        }
+
+        .track-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .track-bar-bg {
+            height: 24px;
+            background-color: #1E293B;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #475569;
+        }
+
+        .track-progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #10B981, #34D399);
+            border-radius: 12px;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .racer-icon {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.6rem;
+            transition: left 0.5s ease-in-out;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        /* Form Controls */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        input[type="text"], select {
+            background-color: #0F172A;
+            border: 1px solid #334155;
+            padding: 12px 14px;
+            border-radius: 10px;
+            color: var(--text-light);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        .avatar-selection {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 5px;
+        }
+
+        .avatar-opt {
+            font-size: 1.8rem;
+            padding: 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            background-color: #0F172A;
+            transition: all 0.2s;
+        }
+
+        .avatar-opt.selected {
+            border-color: var(--primary);
+            background-color: #312E81;
+            transform: scale(1.1);
+        }
+
+        /* Buttons */
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background-color: #334155;
+            box-shadow: none;
+        }
+
+        /* Game Mechanics */
+        .q-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .q-card {
+            background-color: #0F172A;
+            padding: 18px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .opt-btn {
+            background-color: #0F172A;
+            border: 2px solid #334155;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .opt-btn:not(:disabled):hover {
+            border-color: var(--primary);
+            background-color: #1E1B4B;
+        }
+
+        .opt-btn.correct {
+            border-color: var(--secondary) !important;
+            background-color: #064E3B !important;
+            color: white;
+        }
+
+        .opt-btn.incorrect {
+            border-color: var(--danger) !important;
+            background-color: #7F1D1D !important;
+            color: white;
+        }
+
+        .feedback {
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .feedback.correct {
+            display: block;
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--secondary);
+            border: 1px solid var(--secondary);
+        }
+
+        .feedback.incorrect {
+            display: block;
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        /* Result Screen */
+        .podium {
+            text-align: center;
+        }
+
+        .trophy {
+            font-size: 3.5rem;
+            margin-bottom: 5px;
+        }
+
+        .stats-card {
+            background-color: #0F172A;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-lbl {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .status-msg {
+            font-size: 0.8rem;
+            text-align: center;
+            color: var(--secondary);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- PANTALLA 1: REGISTRO DE PARTICIPANTE -->
+        <div id="screen-welcome" class="screen active">
+            <div>
+                <h1 class="header-title">Carrera de Calidad</h1>
+                <p class="subtitle">Evaluación de Procesos & Calibración</p>
+            </div>
+
+            <div class="input-group">
+                <label for="player-name">Nombre y Apellido *</label>
+                <input type="text" id="player-name" placeholder="Ej. Ana Martínez" required>
+            </div>
+
+            <div class="input-group">
+                <label for="player-id">Número de Empleado / ID *</label>
+                <input type="text" id="player-id" placeholder="Ej. EMP-10482" required>
+            </div>
+
+            <div class="input-group">
+                <label for="player-role">Área / Campaña</label>
+                <select id="player-role">
+                    <option value="Agente / Operaciones">Agente / Operaciones</option>
+                    <option value="Analista de Calidad">Analista de Calidad</option>
+                    <option value="Supervisor / Team Leader">Supervisor / Team Leader</option>
+                    <option value="Capacitación / Trainer">Capacitación / Trainer</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Elige tu avatar de carrera:</label>
+                <div class="avatar-selection">
+                    <div class="avatar-opt selected" onclick="selectAvatar(this, '🏎️')">🏎️</div>
+                    <div class="avatar-opt" onclick="selectAvatar(this, '🚀')">🚀</div>
+                    <div class="avatar-opt" onclick="selectAvatar(this, '🏍️')">🏍️</div>
+                    <div class="avatar-opt" onclick="selectAvatar(this, '⚡')">⚡</div>
+                </div>
+            </div>
+
+            <button class="btn" onclick="startGame()">¡Comenzar Carrera!</button>
+        </div>
+
+        <!-- PANTALLA 2: JUEGO EN CURSO -->
+        <div id="screen-game" class="screen">
+            <div class="track-container">
+                <div class="track-labels">
+                    <span>SALIDA</span>
+                    <span id="player-display-name">Piloto</span>
+                    <span>META 🏁</span>
+                </div>
+                <div class="track-bar-bg">
+                    <div id="track-progress" class="track-progress"></div>
+                    <div id="racer-icon" class="racer-icon" style="left: 0%;">🏎️</div>
+                </div>
+            </div>
+
+            <div class="q-meta">
+                <span id="q-number">Pregunta 1/5</span>
+                <span id="timer-display">⏱️ 00:00</span>
+            </div>
+
+            <div id="q-text" class="q-card">Cargando pregunta...</div>
+
+            <div id="options-container" class="options-grid"></div>
+
+            <div id="feedback" class="feedback"></div>
+
+            <button id="next-btn" class="btn" style="display: none;" onclick="nextQuestion()">Siguiente Avance ➔</button>
+        </div>
+
+        <!-- PANTALLA 3: RESULTADOS -->
+        <div id="screen-result" class="screen">
+            <div class="podium">
+                <div class="trophy">🏆</div>
+                <h2 style="font-size: 1.4rem;" id="result-title">¡Llegaste a la Meta!</h2>
+                <p class="subtitle" id="result-subtitle">Resumen de evaluación enviado al analista</p>
+            </div>
+
+            <div class="stats-card">
+                <div class="stat-item">
+                    <div id="stat-score" class="stat-val">0</div>
+                    <div class="stat-lbl">Aciertos</div>
+                </div>
+                <div class="stat-item">
+                    <div id="stat-time" class="stat-val">0s</div>
+                    <div class="stat-lbl">Tiempo</div>
+                </div>
+                <div class="stat-item">
+                    <div id="stat-accuracy" class="stat-val">0%</div>
+                    <div class="stat-lbl">Precisión</div>
+                </div>
+            </div>
+
+            <div id="sending-status" class="status-msg">💾 Enviando registro a Google Sheets...</div>
+
+            <button class="btn" onclick="restartGame()">Volver al Inicio</button>
+        </div>
+
+    </div>
+
+    <script>
+        // URL FIJA DE TU GOOGLE SHEET (APPS SCRIPT)
+        const DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbxKBl3dxR-i46MVrV1xImeCCrxV26PHbyI8VOoaqYoY4VLPISIuJWROE265U6m49O1JpQ/exec";
+
+        const defaultQuestions = [
+            {
+                q: "¿Qué tipo de error se considera cuando un agente proporciona información falsa o incorrecta al cliente?",
+                options: [
+                    "Error Fatal de Negocio / Calidad",
+                    "Error No Fatal de Formato",
+                    "Falta de Habilidades Blandas",
+                    "Oportunidad de Mejora Menor"
+                ],
+                correct: 0
+            },
+            {
+                q: "Durante una evaluación de llamada, ¿cuál es el objetivo principal del proceso de 'Calibración'?",
+                options: [
+                    "Castigar los errores del equipo",
+                    "Alinear criterios de evaluación entre analistas y supervisores",
+                    "Aumentar la duración media de las llamadas (AHT)",
+                    "Filtrar las llamadas más cortas"
+                ],
+                correct: 1
+            },
+            {
+                q: "Si el cliente demuestra frustración o molestia, ¿qué habilidad blanda debe priorizar el agente?",
+                options: [
+                    "Empatía y Escucha Activa",
+                    "Rapidez para colgar la llamada",
+                    "Repetir el script sin cambios",
+                    "Transferir inmediatamente al cliente"
+                ],
+                correct: 0
+            },
+            {
+                q: "¿Qué se debe validar obligatoriamente al inicio de la llamada según el protocolo de seguridad/OTP?",
+                options: [
+                    "La opinión del cliente sobre el servicio",
+                    "La autenticación e identidad del titular de la cuenta",
+                    "La velocidad de la conexión del cliente",
+                    "El historial completo de compras"
+                ],
+                correct: 1
+            },
+            {
+                q: "¿Cuál es la forma correcta de realizar la 'Tipificación' del caso en el CRM?",
+                options: [
+                    "Al finalizar la jornada laboral",
+                    "Seleccionando la primera opción de la lista",
+                    "Registrando el motivo real y la resolución exacta antes de cerrar el contacto",
+                    "Dejar la nota en blanco si la llamada fue breve"
+                ],
+                correct: 2
+            }
+        ];
+
+        let questions = defaultQuestions;
+        let currentQuestionIdx = 0;
+        let score = 0;
+        let selectedAvatar = '🏎️';
+        let startTime, timerInterval, totalSeconds = 0;
+        let playerData = {};
+
+        function selectAvatar(element, icon) {
+            document.querySelectorAll('.avatar-opt').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedAvatar = icon;
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function startGame() {
+            const name = document.getElementById('player-name').value.trim();
+            const id = document.getElementById('player-id').value.trim();
+            const role = document.getElementById('player-role').value;
+
+            if (!name || !id) {
+                alert("Por favor ingresa tu Nombre y Número de Empleado para continuar.");
+                return;
+            }
+
+            playerData = { name, id, role };
+
+            document.getElementById('player-display-name').innerText = name.split(' ')[0];
+            document.getElementById('racer-icon').innerText = selectedAvatar;
+
+            currentQuestionIdx = 0;
+            score = 0;
+            totalSeconds = 0;
+
+            updateTrackPosition();
+            showScreen('screen-game');
+            startTimer();
+            loadQuestion();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                totalSeconds = Math.floor((Date.now() - startTime) / 1000);
+                const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+                const secs = String(totalSeconds % 60).padStart(2, '0');
+                document.getElementById('timer-display').innerText = `⏱️ ${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function loadQuestion() {
+            const qData = questions[currentQuestionIdx];
+            document.getElementById('q-number').innerText = `Pregunta ${currentQuestionIdx + 1}/${questions.length}`;
+            document.getElementById('q-text').innerText = qData.q;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            const feedbackEl = document.getElementById('feedback');
+            feedbackEl.className = 'feedback';
+            feedbackEl.style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+
+            qData.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.innerText = opt;
+                btn.onclick = () => selectOption(idx, qData.correct);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectOption(selectedIdx, correctIdx) {
+            const buttons = document.querySelectorAll('.opt-btn');
+            buttons.forEach(btn => btn.disabled = true);
+
+            const feedbackEl = document.getElementById('feedback');
+
+            if (selectedIdx === correctIdx) {
+                buttons[selectedIdx].classList.add('correct');
+                feedbackEl.innerText = "¡Correcto! Avanzas en la carrera 🚀";
+                feedbackEl.className = "feedback correct";
+                score++;
+                updateTrackPosition();
+            } else {
+                buttons[selectedIdx].classList.add('incorrect');
+                buttons[correctIdx].classList.add('correct');
+                feedbackEl.innerText = "Respuesta incorrecta ❌";
+                feedbackEl.className = "feedback incorrect";
+            }
+
+            document.getElementById('next-btn').style.display = 'block';
+        }
+
+        function updateTrackPosition() {
+            const progressPct = (score / questions.length) * 100;
+            document.getElementById('track-progress').style.width = `${progressPct}%`;
+            document.getElementById('racer-icon').style.left = `${progressPct}%`;
+        }
+
+        function nextQuestion() {
+            currentQuestionIdx++;
+            if (currentQuestionIdx < questions.length) {
+                loadQuestion();
+            } else {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            showScreen('screen-result');
+
+            const accuracy = Math.round((score / questions.length) * 100);
+            document.getElementById('stat-score').innerText = `${score}/${questions.length}`;
+            document.getElementById('stat-time').innerText = `${totalSeconds}s`;
+            document.getElementById('stat-accuracy').innerText = `${accuracy}%`;
+
+            sendToGoogleSheet(accuracy);
+        }
+
+        function sendToGoogleSheet(accuracy) {
+            const statusEl = document.getElementById('sending-status');
+
+            const payload = {
+                fecha: new Date().toLocaleString(),
+                nombre: playerData.name,
+                numEmpleado: playerData.id,
+                rol: playerData.role,
+                aciertos: `${score}/${questions.length}`,
+                precision: `${accuracy}%`,
+                tiempo: totalSeconds
+            };
+
+            fetch(DEFAULT_SHEET_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                statusEl.innerText = "✅ ¡Registro guardado con éxito en el Google Sheet del Analista!";
+                statusEl.style.color = "#10B981";
+            }).catch(err => {
+                statusEl.innerText = "❌ Error al enviar datos al Sheet.";
+                statusEl.style.color = "#EF4444";
+            });
+        }
+
+        function restartGame() {
+            showScreen('screen-welcome');
+        }
+    </script>
+</body>
+</html>
