@@ -33,9 +33,11 @@
             );
         }
 
-        /* Transición suave para el avance del auto */
+        /* Transición suave y orientación hacia la derecha del auto */
         .car-transition {
             transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: scaleX(-1); /* Gira el emoji para que mire a la meta */
+            display: inline-block;
         }
     </style>
 </head>
@@ -172,7 +174,7 @@
             </div>
         </section>
 
-        <!-- PANTALLA 3: RESULTADOS / PODIO -->
+        <!-- PANTALLA 3: RESULTADOS / REVISIÓN Y REFORZAMIENTO -->
         <section id="results-screen" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl text-center space-y-6">
             <div class="inline-block p-4 bg-amber-400/10 rounded-full text-amber-400 mb-2">
                 <i data-lucide="award" class="w-16 h-16 mx-auto"></i>
@@ -209,8 +211,19 @@
                 ⏳ Guardando resultado en Google Sheets...
             </div>
 
+            <!-- SECCIÓN DE REVISIÓN Y REFORZAMIENTO -->
+            <div class="text-left space-y-4 pt-4 border-t border-slate-700">
+                <div class="flex items-center space-x-2 text-slate-200">
+                    <i data-lucide="book-open-check" class="w-5 h-5 text-amber-400"></i>
+                    <h3 class="font-orbitron text-lg font-bold">Desglose de Respuestas para Reforzamiento</h3>
+                </div>
+                <p class="text-xs text-slate-400">Revisión de respuestas contestadas en esta sesión:</p>
+                
+                <div id="review-container" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
+            </div>
+
             <button onclick="location.reload()" 
-                    class="bg-slate-700 hover:bg-slate-600 text-slate-100 font-orbitron font-bold py-3 px-8 rounded-xl transition transform active:scale-95 inline-flex items-center space-x-2">
+                    class="bg-slate-700 hover:bg-slate-600 text-slate-100 font-orbitron font-bold py-3 px-8 rounded-xl transition transform active:scale-95 inline-flex items-center space-x-2 mt-4">
                 <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                 <span>JUGAR DE NUEVO</span>
             </button>
@@ -227,8 +240,7 @@
         // ==========================================
         // 1. CONFIGURACIÓN DEL GOOGLE APPS SCRIPT
         // ==========================================
-        // REEMPLAZA ESTA URL CON TU WEB APP URL DESPLEGADA DE GOOGLE SHEETS
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCjdhak5cdBrwQozEppw7oAExbYSH1euqDyEGFOdMK-Ulzp5IK76LeHifQjjiNzzgnZA/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzD84_MI4Bt4oVEq5qZbAK2aDBdOfY1r6tDBwcEbVrX0u6f647Ry3qZURQxB9GdmN8AIw/exec";
 
         // ==========================================
         // 2. VARIABLES DE ESTADO
@@ -239,6 +251,7 @@
         let score = 0;
         let totalSeconds = 0;
         let timerInterval = null;
+        let userAnswersHistory = [];
 
         let playerData = {
             name: '',
@@ -265,7 +278,7 @@
         }
 
         // ==========================================
-        // 3. INICIALIZACIÓN DINÁMICA POR PORCENTAJE
+        // 3. INICIALIZACIÓN DINÁMICA
         // ==========================================
         async function initApp() {
             try {
@@ -274,11 +287,9 @@
 
                 const total = allQuestions.length;
                 
-                // Cálculo del 30% y 60% redondeado
                 const basicCount = Math.max(1, Math.round(total * 0.30));
                 const interCount = Math.max(1, Math.round(total * 0.60));
 
-                // Actualización de textos dinámicos en la pantalla de inicio
                 document.getElementById('lbl-basic').innerText = `${basicCount} Preguntas (30%)`;
                 document.getElementById('lbl-intermediate').innerText = `${interCount} Preguntas (60%)`;
                 document.getElementById('lbl-pro').innerText = `${total} Preguntas (100%)`;
@@ -299,7 +310,6 @@
             playerData.role = document.getElementById('player-role').value;
             playerData.level = document.querySelector('input[name="game-level"]:checked').value;
 
-            // Selección dinámica proporcional a la base total
             const total = allQuestions.length;
 
             if (playerData.level === 'Básico') {
@@ -309,9 +319,10 @@
                 const count = Math.max(1, Math.round(total * 0.60));
                 activeQuestions = allQuestions.slice(0, count);
             } else {
-                activeQuestions = allQuestions; // Pro (100%)
+                activeQuestions = allQuestions;
             }
 
+            userAnswersHistory = [];
             document.getElementById('registration-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('game-stats').classList.remove('hidden');
@@ -362,6 +373,13 @@
             const q = activeQuestions[currentQuestionIndex];
             const isCorrect = (selectedIdx === q.correct);
 
+            userAnswersHistory.push({
+                question: q.q,
+                selectedText: q.options[selectedIdx],
+                correctText: q.options[q.correct],
+                isCorrect: isCorrect
+            });
+
             if (isCorrect) {
                 score++;
                 playSound(600, 0.1);
@@ -379,7 +397,7 @@
         }
 
         // ==========================================
-        // 5. FINALIZACIÓN Y RETROALIMENTACIÓN
+        // 5. FINALIZACIÓN Y ENVÍO ESTRUCTURADO
         // ==========================================
         function finishGame() {
             clearInterval(timerInterval);
@@ -396,7 +414,6 @@
             document.getElementById('final-accuracy').innerText = `${accuracy}%`;
             document.getElementById('final-time').innerText = `${totalSeconds}s`;
 
-            // MENSAJE DINÁMICO POR PORCENTAJE
             const feedbackCard = document.getElementById('feedback-card');
             const feedbackMsg = document.getElementById('feedback-message');
 
@@ -416,7 +433,44 @@
                 feedbackMsg.innerText = "🚨 Requiere Reforzamiento. Te recomendamos repasar los procedimientos con tu equipo de Calidad.";
             }
 
+            renderReviewSection();
             sendToGoogleSheet(accuracy);
+        }
+
+        function renderReviewSection() {
+            const reviewContainer = document.getElementById('review-container');
+            reviewContainer.innerHTML = '';
+
+            userAnswersHistory.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-xl border text-sm space-y-2 ${
+                    item.isCorrect 
+                        ? 'bg-emerald-950/20 border-emerald-800/50 text-slate-200' 
+                        : 'bg-rose-950/30 border-rose-800/50 text-slate-200'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-2">
+                        <span class="font-bold text-slate-300">P${index + 1}. ${item.question}</span>
+                        <span class="px-2 py-0.5 rounded text-xs font-bold ${
+                            item.isCorrect ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                        }">
+                            ${item.isCorrect ? 'Correcta ✅' : 'Incorrecta ❌'}
+                        </span>
+                    </div>
+                    ${
+                        item.isCorrect 
+                            ? `<p class="text-xs text-emerald-400 font-medium">Respuesta: ${item.selectedText}</p>`
+                            : `<div class="text-xs space-y-1">
+                                 <p class="text-rose-400"><strong>Tu respuesta:</strong> ${item.selectedText}</p>
+                                 <p class="text-emerald-400"><strong>Respuesta correcta:</strong> ${item.correctText}</p>
+                               </div>`
+                    }
+                `;
+                reviewContainer.appendChild(card);
+            });
+
+            lucide.createIcons();
         }
 
         function sendToGoogleSheet(accuracy) {
@@ -425,6 +479,9 @@
                 statusEl.innerText = "⏳ Guardando resultado en Google Sheets...";
                 statusEl.style.color = "#F59E0B";
             }
+
+            // Enviar la respuesta EXACTA seleccionada para cada celda
+            const respuestasArray = userAnswersHistory.map(item => item.selectedText);
 
             fetch(SCRIPT_URL, {
                 method: 'POST', 
@@ -438,11 +495,12 @@
                     nivel: playerData.level, 
                     aciertos: `${score}/${activeQuestions.length}`, 
                     precision: `${accuracy}%`, 
-                    tiempo: totalSeconds 
+                    tiempo: totalSeconds,
+                    respuestasArray: respuestasArray
                 })
             }).then(() => {
                 if (statusEl) {
-                    statusEl.innerText = "✅ ¡Registro guardado con éxito en Google Sheets!";
+                    statusEl.innerText = "✅ ¡Respuestas guardadas celda por celda en Google Sheets!";
                     statusEl.style.color = "#10B981";
                 }
             }).catch(() => { 
