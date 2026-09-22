@@ -3,512 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gran Premio de Calidad - Carrera de Trivia</title>
-    <!-- Tailwind CSS para diseño moderno -->
+    <title>Evaluación Interactiva - Calidad & Procesos</title>
+    <!-- Tailwind CSS CDN para estilos rápidos y responsivos -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Canvas Confetti para celebración final -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts para tipografía profesional -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Inter:wght@400;600;700&display=swap');
-        
-        .font-orbitron { font-family: 'Orbitron', sans-serif; }
-        .font-inter { font-family: 'Inter', sans-serif; }
-
-        /* Estilo de la pista de carreras */
-        .track-pattern {
-            background-color: #1e293b;
-            background-image: linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 20px 100%;
+        body {
+            font-family: 'Inter', sans-serif;
         }
-
-        .finish-line {
-            background: repeating-linear-gradient(
-                45deg,
-                #000,
-                #000 10px,
-                #fff 10px,
-                #fff 20px
-            );
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
         }
-
-        /* Transición suave y orientación hacia la derecha del auto */
-        .car-transition {
-            transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-            transform: scaleX(-1); /* Gira el emoji para que mire a la meta */
-            display: inline-block;
+        /* Transición suave para cambios de pantalla */
+        .pantalla {
+            transition: opacity 0.3s ease-in-out;
         }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-inter min-h-screen flex flex-col justify-between" onload="initApp()">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-blue-500 selection:text-white">
 
-    <!-- ENCABEZADO / HEADER -->
-    <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700 p-4 sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
+    <!-- ENCABEZADO INSTITUCIONAL DE CALIDAD -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <i data-lucide="trophy" class="text-amber-400 w-7 h-7"></i>
-                <h1 class="font-orbitron text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
-                    TRIVIA RUNNER PRO
-                </h1>
+                <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/30">
+                    C&P
+                </div>
+                <div>
+                    <h1 class="text-sm font-bold tracking-wide text-white uppercase">Calibración Operativa</h1>
+                    <p class="text-[11px] text-slate-400">Plataforma de Evaluación y Refuerzo</p>
+                </div>
             </div>
-            <div id="game-stats" class="hidden flex items-center space-x-6 text-sm font-semibold">
-                <div class="flex items-center space-x-2 text-slate-300">
-                    <i data-lucide="clock" class="w-4 h-4 text-cyan-400"></i>
-                    <span id="timer-display">00:00</span>
-                </div>
-                <div class="flex items-center space-x-2 text-slate-300">
-                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
-                    <span id="score-display">0/0</span>
-                </div>
+            <!-- Indicador de Tema Activo cargado dinámicamente -->
+            <div id="badgeTema" class="hidden sm:flex items-center space-x-2 bg-slate-800/80 border border-slate-700/60 px-3 py-1 rounded-full text-xs text-slate-300">
+                <span id="emojiTema">🏎️</span>
+                <span id="nombreTema" class="capitalize font-medium">Cargando Tema...</span>
             </div>
         </div>
     </header>
 
-    <!-- CONTENIDO PRINCIPAL -->
-    <main class="max-w-4xl mx-auto w-full p-4 flex-grow flex flex-col justify-center">
+    <!-- CONTENEDOR PRINCIPAL (FLUJO DEL JUEGO / EVALUACIÓN) -->
+    <main class="max-w-3xl mx-auto w-full px-4 py-6 flex-grow flex items-center justify-center">
 
-        <!-- PANTALLA CARGANDO INICIAL -->
-        <section id="loading-screen" class="text-center py-16 space-y-4">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-400 border-t-transparent"></div>
-            <p class="text-slate-300 font-semibold text-lg">Cargando preguntas desde Google Sheets...</p>
-        </section>
-
-        <!-- PANTALLA 1: REGISTRO Y SELECCIÓN DE NIVEL -->
-        <section id="registration-screen" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
-            <div class="text-center space-y-2">
-                <h2 class="font-orbitron text-2xl md:text-3xl font-bold text-slate-100">Registro de Piloto</h2>
-                <p class="text-slate-400 text-sm">Ingresa tus datos e identifica tu nivel de calibración para iniciar la carrera.</p>
+        <!-- 1. PANTALLA DE REGISTRO DEL PARTICIPANTE -->
+        <section id="pantallaRegistro" class="pantalla w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-extrabold text-white mb-2">Bienvenido a la Evaluación</h2>
+                <p class="text-sm text-slate-400">Ingresa tus datos para comenzar la validación de conocimientos del periodo.</p>
             </div>
 
-            <form id="start-form" onsubmit="startGame(event)" class="space-y-4 max-w-md mx-auto">
+            <form id="formRegistro" onsubmit="iniciarEvaluacion(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Nombre Completo</label>
-                    <input type="text" id="player-name" required placeholder="Ej. Ana Martínez" 
-                           class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition">
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">ID / N° Empleado</label>
-                        <input type="text" id="player-id" required placeholder="Ej. 10294" 
-                               class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Rol / Área</label>
-                        <select id="player-role" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition">
-                            <option value="">Selecciona...</option>
-                            <option value="Agente">Agente de Operaciones</option>
-                            <option value="Analista de Calidad">Analista de Calidad</option>
-                            <option value="Supervisor">Supervisor de Operaciones</option>
-                            <option value="Capacitador">Capacitador / Trainer</option>
-                        </select>
-                    </div>
+                    <label for="numEmpleado" class="block text-xs font-semibold uppercase text-slate-300 mb-1">Número de Empleado</label>
+                    <input type="text" id="numEmpleado" required placeholder="Ej. EMP-1024"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Nivel de Desafío (Dificultad)</label>
-                    <div class="grid grid-cols-3 gap-3">
-                        <label class="cursor-pointer">
-                            <input type="radio" name="game-level" value="Básico" checked class="peer sr-only">
-                            <div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center peer-checked:border-amber-400 peer-checked:bg-amber-400/10 transition">
-                                <div class="font-bold text-amber-400 text-sm">Básico</div>
-                                <div id="lbl-basic" class="text-[10px] text-slate-400 mt-0.5">Calculando...</div>
-                            </div>
-                        </label>
-                        <label class="cursor-pointer">
-                            <input type="radio" name="game-level" value="Intermedio" class="peer sr-only">
-                            <div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center peer-checked:border-amber-400 peer-checked:bg-amber-400/10 transition">
-                                <div class="font-bold text-amber-400 text-sm">Intermedio</div>
-                                <div id="lbl-intermediate" class="text-[10px] text-slate-400 mt-0.5">Calculando...</div>
-                            </div>
-                        </label>
-                        <label class="cursor-pointer">
-                            <input type="radio" name="game-level" value="Avanzado / Pro" class="peer sr-only">
-                            <div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center peer-checked:border-amber-400 peer-checked:bg-amber-400/10 transition">
-                                <div class="font-bold text-amber-400 text-sm">Pro</div>
-                                <div id="lbl-pro" class="text-[10px] text-slate-400 mt-0.5">Calculando...</div>
-                            </div>
-                        </label>
-                    </div>
+                    <label for="nombreEmpleado" class="block text-xs font-semibold uppercase text-slate-300 mb-1">Nombre Completo</label>
+                    <input type="text" id="nombreEmpleado" required placeholder="Ej. Juan Pérez"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                </div>
+
+                <div>
+                    <label for="rolEmpleado" class="block text-xs font-semibold uppercase text-slate-300 mb-1">Rol / Puesto Operativo</label>
+                    <select id="rolEmpleado" required
+                            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                        <option value="" disabled selected>Selecciona tu rol...</option>
+                        <option value="Ejecutivo">Ejecutivo de Operación</option>
+                        <option value="Supervisor">Supervisor</option>
+                        <option value="Capacitador">Capacitador</option>
+                        <option value="Calidad">Analista de Calidad</option>
+                    </select>
                 </div>
 
                 <button type="submit" 
-                        class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-orbitron font-black py-4 rounded-xl shadow-lg transition transform active:scale-98 flex items-center justify-center space-x-2 text-lg mt-6">
-                    <span>¡INICIAR CARRERA!</span>
-                    <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                        class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-blue-600/30 transition-all transform active:scale-95 text-sm uppercase tracking-wider mt-2">
+                    Comenzar Evaluación
                 </button>
             </form>
         </section>
 
-        <!-- PANTALLA 2: JUEGO EN VIVO -->
-        <section id="game-screen" class="hidden space-y-6">
-            <!-- PISTA DE CARRERAS -->
-            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl">
-                <div class="flex justify-between text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
-                    <span>Línea de Salida</span>
-                    <span>Progreso de Pista</span>
-                    <span>Meta 🏁</span>
+
+        <!-- 2. PANTALLA DE LA PISTA TEMÁTICA Y PREGUNTAS (JUEGO) -->
+        <section id="pantallaJuego" class="pantalla hidden w-full space-y-6">
+            
+            <!-- BARRA DE PISTA TEMÁTICA (AVATAR QUE AVANZA) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                <div class="flex justify-between items-center text-xs font-semibold text-slate-400 mb-2">
+                    <span id="textoSalidaPista">Inicio</span>
+                    <span id="textoProgreso">Pregunta 1 de 5</span>
+                    <span id="textoMetaPista">Meta 🏆</span>
                 </div>
-                <div class="relative h-16 track-pattern rounded-xl border border-slate-700 overflow-hidden flex items-center px-2">
-                    <div class="absolute right-0 top-0 bottom-0 w-6 finish-line opacity-80"></div>
-                    <div id="car-player" class="absolute left-2 car-transition text-3xl filter drop-shadow-md z-10" style="left: 2%;">
+                <!-- Pista visual con degradado dinámico -->
+                <div class="relative w-full h-8 bg-slate-950 rounded-full border border-slate-800 p-1 flex items-center overflow-hidden">
+                    <div id="barraProgresoPista" class="h-full bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full transition-all duration-500" style="width: 10%;"></div>
+                    <!-- Avatar Emoji que camina por la pista -->
+                    <div id="avatarPista" class="absolute text-xl transition-all duration-500 transform -translate-x-1/2" style="left: 10%;">
                         🏎️
                     </div>
                 </div>
             </div>
 
-            <!-- TARJETA DE PREGUNTA -->
-            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
-                <div class="flex justify-between items-center text-xs font-bold text-amber-400 uppercase tracking-widest">
-                    <span id="question-number">Pregunta 1 de 10</span>
-                    <span id="level-badge" class="bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full">Nivel: Básico</span>
+            <!-- TARJETA DE PREGUNTA Y OPCIONES -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <span id="badgeCategoria" class="text-[10px] uppercase font-bold tracking-widest bg-blue-950 text-blue-400 border border-blue-800 px-3 py-1 rounded-full">
+                        Criterio de Calidad
+                    </span>
+                    <span id="cronometro" class="font-orbitron text-xs text-amber-400 font-bold">⏱️ 00:00</span>
                 </div>
 
-                <h3 id="question-text" class="text-lg md:text-xl font-bold text-slate-100 min-h-[3rem] flex items-center">
-                    Cargando pregunta...
+                <h3 id="textoPregunta" class="text-lg font-bold text-white mb-6 leading-relaxed">
+                    Cargando enunciado de la pregunta...
                 </h3>
 
-                <!-- OPCIONES DE RESPUESTA -->
-                <div id="options-container" class="grid grid-cols-1 gap-3"></div>
+                <!-- OPCIONES DE RESPUETA -->
+                <div id="contenedorOpciones" class="space-y-3">
+                    <!-- Generadas dinámicamente desde JavaScript -->
+                </div>
             </div>
         </section>
 
-        <!-- PANTALLA 3: RESULTADOS / REVISIÓN Y REFORZAMIENTO -->
-        <section id="results-screen" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl text-center space-y-6">
-            <div class="inline-block p-4 bg-amber-400/10 rounded-full text-amber-400 mb-2">
-                <i data-lucide="award" class="w-16 h-16 mx-auto"></i>
-            </div>
-            
-            <div class="space-y-2">
-                <h2 class="font-orbitron text-3xl font-black text-slate-100">¡CARRERA FINALIZADA!</h2>
-                <p id="player-congrats" class="text-slate-300 font-semibold">¡Excelente desempeño en la pista!</p>
+
+        <!-- 3. PANTALLA DE RESULTADOS Y RETROALIMENTACIÓN (SIN RANKINGS NI SATURACIÓN) -->
+        <section id="pantallaResultados" class="pantalla hidden w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 text-center shadow-2xl space-y-6">
+            <div class="w-16 h-16 bg-blue-500/10 border border-blue-500/30 rounded-2xl flex items-center justify-center mx-auto text-3xl">
+                📊
             </div>
 
-            <!-- TABLERO DE MÉTRICAS -->
-            <div class="grid grid-cols-3 gap-4 max-w-md mx-auto bg-slate-900 border border-slate-700 rounded-xl p-4">
+            <div>
+                <h2 class="text-2xl font-black text-white">Evaluación Finalizada</h2>
+                <p id="mensajePersonalizado" class="text-sm text-slate-400 mt-1">Gracias por completar la calibración de esta semana.</p>
+            </div>
+
+            <!-- TARJETA RESUMEN DE PUNTAJE Y EFECTIVIDAD -->
+            <div class="grid grid-cols-2 gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800">
                 <div>
-                    <div class="text-xs text-slate-400 uppercase font-bold">Aciertos</div>
-                    <div id="final-score" class="font-orbitron text-xl font-bold text-amber-400 mt-1">0/0</div>
-                </div>
-                <div>
-                    <div class="text-xs text-slate-400 uppercase font-bold">Precisión</div>
-                    <div id="final-accuracy" class="font-orbitron text-xl font-bold text-emerald-400 mt-1">0%</div>
+                    <span class="block text-[10px] uppercase font-bold text-slate-500">Puntuación</span>
+                    <span id="resumenPuntaje" class="font-orbitron text-2xl font-bold text-blue-400">0 / 0</span>
                 </div>
                 <div>
-                    <div class="text-xs text-slate-400 uppercase font-bold">Tiempo</div>
-                    <div id="final-time" class="font-orbitron text-xl font-bold text-cyan-400 mt-1">0s</div>
+                    <span class="block text-[10px] uppercase font-bold text-slate-500">Aciertos</span>
+                    <span id="resumenPorcentaje" class="font-orbitron text-2xl font-bold text-emerald-400">0%</span>
                 </div>
             </div>
 
-            <!-- TARJETA MENSAJE DINÁMICO POR PORCENTAJE DE PRECISIÓN -->
-            <div id="feedback-card" class="max-w-md mx-auto p-4 rounded-xl border text-center transition-all">
-                <p id="feedback-message" class="text-sm md:text-base font-semibold">Cargando retroalimentación...</p>
+            <!-- MENSAJE PEDAGÓGICO DE RETROALIMENTACIÓN -->
+            <div id="contenedorRetroalimentacion" class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl text-left text-xs text-slate-300 leading-relaxed space-y-2">
+                <p class="font-bold text-white uppercase tracking-wider text-[11px] border-b border-slate-800 pb-2">
+                    💡 Nota de Refuerzo
+                </p>
+                <p id="textoRetroalimentacion">
+                    Procesando tus respuestas...
+                </p>
             </div>
 
-            <!-- ESTADO DE ENVÍO A GOOGLE SHEETS -->
-            <div id="sending-status" class="text-sm font-semibold text-slate-400 pt-2">
-                ⏳ Guardando resultado en Google Sheets...
-            </div>
-
-            <!-- SECCIÓN DE REVISIÓN Y REFORZAMIENTO -->
-            <div class="text-left space-y-4 pt-4 border-t border-slate-700">
-                <div class="flex items-center space-x-2 text-slate-200">
-                    <i data-lucide="book-open-check" class="w-5 h-5 text-amber-400"></i>
-                    <h3 class="font-orbitron text-lg font-bold">Desglose de Respuestas para Reforzamiento</h3>
-                </div>
-                <p class="text-xs text-slate-400">Revisión de respuestas contestadas en esta sesión:</p>
-                
-                <div id="review-container" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
-            </div>
-
-            <button onclick="location.reload()" 
-                    class="bg-slate-700 hover:bg-slate-600 text-slate-100 font-orbitron font-bold py-3 px-8 rounded-xl transition transform active:scale-95 inline-flex items-center space-x-2 mt-4">
-                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                <span>JUGAR DE NUEVO</span>
+            <button onclick="reiniciarEvaluacion()" 
+                    class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3 px-6 rounded-xl border border-slate-700 transition-colors text-xs uppercase tracking-wider">
+                Volver al Inicio
             </button>
         </section>
 
     </main>
 
-    <!-- PIE DE PÁGINA -->
-    <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800">
-        Sistema de Evaluación y Calibración Operativa • Gestión de Calidad
+    <!-- PIE DE PÁGINA PERSISTENTE INSTITUCIONAL -->
+    <footer class="border-t border-slate-900 bg-slate-950/80 py-4 text-center">
+        <p class="text-xs text-slate-500 font-medium">
+            Diseñado e Implementado por el <span class="text-slate-400 font-semibold">Área de Calidad & Procesos</span>
+        </p>
     </footer>
 
+    <!-- LÓGICA DE INTERACCIÓN Y CONEXIÓN A GOOGLE SHEETS -->
     <script>
-        // ==========================================
-        // 1. CONFIGURACIÓN DEL GOOGLE APPS SCRIPT
-        // ==========================================
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzD84_MI4Bt4oVEq5qZbAK2aDBdOfY1r6tDBwcEbVrX0u6f647Ry3qZURQxB9GdmN8AIw/exec";
+        // CONFIGURACIÓN DE URL DE DESPLIEGUE (Reemplazar con tu URL de Apps Script)
+        const URL_APPS_SCRIPT = "TU_URL_DE_DESPLIEGUE_APPS_SCRIPT_AQUI";
 
-        // ==========================================
-        // 2. VARIABLES DE ESTADO
-        // ==========================================
-        let allQuestions = [];
-        let activeQuestions = [];
-        let currentQuestionIndex = 0;
-        let score = 0;
-        let totalSeconds = 0;
-        let timerInterval = null;
-        let userAnswersHistory = [];
-
-        let playerData = {
-            name: '',
-            id: '',
-            role: '',
-            level: ''
+        // Mapeo de Temas Configurables (Celda B2 de Google Sheets)
+        const configuracionTemas = {
+            corporativo:   { nombre: "Corporativo", emoji: "🏢", avatar: "👤", salida: "Inicio", meta: "Meta" },
+            nfl:           { nombre: "NFL Season", emoji: "🏈", avatar: "🏃‍♂️", salida: "Propia", meta: "Touchdown" },
+            fiestasPatrias:{ nombre: "Fiestas Patrias", emoji: "🇲🇽", avatar: "🐎", salida: "Zócalo", meta: "Victoria" },
+            diaDeMuertos:  { nombre: "Día de Muertos", emoji: "💀", avatar: "🕯️", salida: "Ofrenda", meta: "Mictlán" },
+            navidad:       { nombre: "Navidad", emoji: "🎄", avatar: "🛷", salida: "Taller", meta: "Nochebuena" }
         };
 
-        lucide.createIcons();
+        let temaActual = configuracionTemas.corporativo;
+        let datosEmpleado = {};
+        let tiempoInicio = 0;
 
-        // Audio Effects
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(freq, duration) {
+        // Cargar el tema configurado desde Google Sheets al iniciar la página
+        window.addEventListener('DOMContentLoaded', async () => {
             try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
-            } catch(e){}
-        }
-
-        // ==========================================
-        // 3. INICIALIZACIÓN DINÁMICA
-        // ==========================================
-        async function initApp() {
-            try {
-                const response = await fetch(SCRIPT_URL);
-                allQuestions = await response.json();
-
-                const total = allQuestions.length;
-                
-                const basicCount = Math.max(1, Math.round(total * 0.30));
-                const interCount = Math.max(1, Math.round(total * 0.60));
-
-                document.getElementById('lbl-basic').innerText = `${basicCount} Preguntas (30%)`;
-                document.getElementById('lbl-intermediate').innerText = `${interCount} Preguntas (60%)`;
-                document.getElementById('lbl-pro').innerText = `${total} Preguntas (100%)`;
-
-                document.getElementById('loading-screen').classList.add('hidden');
-                document.getElementById('registration-screen').classList.remove('hidden');
-
-            } catch (error) {
-                alert("Error al conectar con Google Sheets. Revisa tu URL de despliegue.");
+                const res = await fetch(URL_APPS_SCRIPT);
+                const data = await res.json();
+                if(data.status === 'success' && configuracionTemas[data.temaActivo]) {
+                    temaActual = configuracionTemas[data.temaActivo];
+                }
+            } catch(e) {
+                console.log("Usando tema corporativo por defecto.");
             }
+            aplicarTema();
+        });
+
+        function aplicarTema() {
+            document.getElementById('badgeTema').classList.remove('hidden');
+            document.getElementById('badgeTema').classList.add('flex');
+            document.getElementById('emojiTema').innerText = temaActual.emoji;
+            document.getElementById('nombreTema').innerText = temaActual.nombre;
+            
+            document.getElementById('avatarPista').innerText = temaActual.avatar;
+            document.getElementById('textoSalidaPista').innerText = temaActual.salida;
+            document.getElementById('textoMetaPista').innerText = temaActual.meta;
         }
 
-        function startGame(e) {
+        function iniciarEvaluacion(e) {
             e.preventDefault();
+            datosEmpleado = {
+                numEmpleado: document.getElementById('numEmpleado').value,
+                nombre: document.getElementById('nombreEmpleado').value,
+                rol: document.getElementById('rolEmpleado').value
+            };
 
-            playerData.name = document.getElementById('player-name').value.trim();
-            playerData.id = document.getElementById('player-id').value.trim();
-            playerData.role = document.getElementById('player-role').value;
-            playerData.level = document.querySelector('input[name="game-level"]:checked').value;
-
-            const total = allQuestions.length;
-
-            if (playerData.level === 'Básico') {
-                const count = Math.max(1, Math.round(total * 0.30));
-                activeQuestions = allQuestions.slice(0, count);
-            } else if (playerData.level === 'Intermedio') {
-                const count = Math.max(1, Math.round(total * 0.60));
-                activeQuestions = allQuestions.slice(0, count);
-            } else {
-                activeQuestions = allQuestions;
-            }
-
-            userAnswersHistory = [];
-            document.getElementById('registration-screen').classList.add('hidden');
-            document.getElementById('game-screen').classList.remove('hidden');
-            document.getElementById('game-stats').classList.remove('hidden');
-            document.getElementById('level-badge').innerText = `Nivel: ${playerData.level}`;
-
-            startTimer();
-            renderQuestion();
-        }
-
-        function startTimer() {
-            timerInterval = setInterval(() => {
-                totalSeconds++;
-                const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-                const secs = String(totalSeconds % 60).padStart(2, '0');
-                document.getElementById('timer-display').innerText = `${mins}:${secs}`;
-            }, 1000);
-        }
-
-        // ==========================================
-        // 4. DESARROLLO DE LA TRIVIA
-        // ==========================================
-        function renderQuestion() {
-            const q = activeQuestions[currentQuestionIndex];
+            document.getElementById('pantallaRegistro').classList.add('hidden');
+            document.getElementById('pantallaJuego').classList.remove('hidden');
+            tiempoInicio = Date.now();
             
-            document.getElementById('question-number').innerText = `Pregunta ${currentQuestionIndex + 1} de ${activeQuestions.length}`;
-            document.getElementById('score-display').innerText = `${score}/${activeQuestions.length}`;
-            document.getElementById('question-text').innerText = q.q;
-
-            const container = document.getElementById('options-container');
-            container.innerHTML = '';
-
-            q.options.forEach((opt, idx) => {
-                const btn = document.createElement('button');
-                btn.className = "w-full text-left bg-slate-900/80 hover:bg-slate-700/80 border border-slate-700/80 hover:border-amber-400/50 p-4 rounded-xl font-semibold transition text-slate-200 flex items-center justify-between group";
-                btn.onclick = () => selectOption(idx);
-                btn.innerHTML = `
-                    <span>${opt}</span>
-                    <span class="text-xs font-mono bg-slate-800 group-hover:bg-amber-400 group-hover:text-slate-950 px-2 py-1 rounded text-slate-400 transition">Opción ${idx+1}</span>
-                `;
-                container.appendChild(btn);
-            });
-
-            const progressPercent = (currentQuestionIndex / activeQuestions.length) * 85 + 2;
-            document.getElementById('car-player').style.left = `${progressPercent}%`;
+            // Aquí se llamaría a cargar las preguntas activas
+            cargarPreguntaEjemplo();
         }
 
-        function selectOption(selectedIdx) {
-            const q = activeQuestions[currentQuestionIndex];
-            const isCorrect = (selectedIdx === q.correct);
+        function cargarPreguntaEjemplo() {
+            document.getElementById('textoPregunta').innerText = "¿Cuál es el tiempo máximo permitido para dejar en espera a un cliente según el estándar de Calidad?";
+            const contenedor = document.getElementById('contenedorOpciones');
+            contenedor.innerHTML = `
+                <button onclick="responder(true)" class="w-full text-left bg-slate-950 hover:bg-blue-950/50 border border-slate-800 hover:border-blue-600/50 p-3.5 rounded-xl text-xs text-slate-200 transition-all">
+                    a) 30 segundos previa notificación.
+                </button>
+                <button onclick="responder(false)" class="w-full text-left bg-slate-950 hover:bg-blue-950/50 border border-slate-800 hover:border-blue-600/50 p-3.5 rounded-xl text-xs text-slate-200 transition-all">
+                    b) 2 minutos sin avisar al cliente.
+                </button>
+            `;
+        }
 
-            userAnswersHistory.push({
-                question: q.q,
-                selectedText: q.options[selectedIdx],
-                correctText: q.options[q.correct],
-                isCorrect: isCorrect
-            });
+        function responder(esCorrecta) {
+            // Animación sencilla de avance en la pista
+            document.getElementById('barraProgresoPista').style.width = '100%';
+            document.getElementById('avatarPista').style.left = '90%';
 
-            if (isCorrect) {
-                score++;
-                playSound(600, 0.1);
+            setTimeout(() => {
+                finalizarEvaluacion(esCorrecta ? 100 : 50, esCorrecta ? 100 : 50);
+            }, 600);
+        }
+
+        function finalizarEvaluacion(puntaje, porcentaje) {
+            const tiempoTotalSeg = Math.round((Date.now() - tiempoInicio) / 1000);
+
+            document.getElementById('pantallaJuego').classList.add('hidden');
+            document.getElementById('pantallaResultados').classList.remove('hidden');
+
+            document.getElementById('resumenPuntaje').innerText = `${puntaje} pts`;
+            document.getElementById('resumenPorcentaje').innerText = `${porcentaje}%`;
+
+            // Retroalimentación basada únicamente en el desempeño
+            const textoRetro = document.getElementById('textoRetroalimentacion');
+            if(porcentaje >= 80) {
+                textoRetro.innerText = "¡Excelente desempeño! Demuestras un dominio sólido de los procedimientos operativos y el estándar de calidad vigente.";
             } else {
-                playSound(200, 0.2);
+                textoRetro.innerText = "Te sugerimos repasar el manual de políticas del proceso. Recuerda que la correcta aplicación garantiza la excelencia en el servicio.";
             }
 
-            currentQuestionIndex++;
-
-            if (currentQuestionIndex < activeQuestions.length) {
-                renderQuestion();
-            } else {
-                finishGame();
-            }
-        }
-
-        // ==========================================
-        // 5. FINALIZACIÓN Y ENVÍO ESTRUCTURADO
-        // ==========================================
-        function finishGame() {
-            clearInterval(timerInterval);
-            
-            document.getElementById('car-player').style.left = '88%';
-
-            document.getElementById('game-screen').classList.add('hidden');
-            document.getElementById('results-screen').classList.remove('hidden');
-
-            const accuracy = Math.round((score / activeQuestions.length) * 100);
-
-            document.getElementById('player-congrats').innerText = `¡Felicidades, ${playerData.name}! Has completado el circuito.`;
-            document.getElementById('final-score').innerText = `${score}/${activeQuestions.length}`;
-            document.getElementById('final-accuracy').innerText = `${accuracy}%`;
-            document.getElementById('final-time').innerText = `${totalSeconds}s`;
-
-            const feedbackCard = document.getElementById('feedback-card');
-            const feedbackMsg = document.getElementById('feedback-message');
-
-            if (accuracy === 100) {
-                feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-emerald-500/50 bg-emerald-500/10 text-emerald-400 font-bold";
-                feedbackMsg.innerText = "🏆 ¡Calibración Impecable! Dominio total de los procesos y políticas de calidad.";
-                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
-            } else if (accuracy >= 80) {
-                feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-cyan-500/50 bg-cyan-500/10 text-cyan-300 font-semibold";
-                feedbackMsg.innerText = "🥇 ¡Gran desempeño! Tienes un conocimiento muy sólido de la operación.";
-                confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
-            } else if (accuracy >= 60) {
-                feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-amber-500/50 bg-amber-500/10 text-amber-300 font-medium";
-                feedbackMsg.innerText = "⚠️ ¡Buen esfuerzo! Hay algunos puntos específicos que vale la pena reforzar.";
-            } else {
-                feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-rose-500/50 bg-rose-500/10 text-rose-300 font-medium";
-                feedbackMsg.innerText = "🚨 Requiere Reforzamiento. Te recomendamos repasar los procedimientos con tu equipo de Calidad.";
-            }
-
-            renderReviewSection();
-            sendToGoogleSheet(accuracy);
-        }
-
-        function renderReviewSection() {
-            const reviewContainer = document.getElementById('review-container');
-            reviewContainer.innerHTML = '';
-
-            userAnswersHistory.forEach((item, index) => {
-                const card = document.createElement('div');
-                card.className = `p-4 rounded-xl border text-sm space-y-2 ${
-                    item.isCorrect 
-                        ? 'bg-emerald-950/20 border-emerald-800/50 text-slate-200' 
-                        : 'bg-rose-950/30 border-rose-800/50 text-slate-200'
-                }`;
-
-                card.innerHTML = `
-                    <div class="flex items-start justify-between gap-2">
-                        <span class="font-bold text-slate-300">P${index + 1}. ${item.question}</span>
-                        <span class="px-2 py-0.5 rounded text-xs font-bold ${
-                            item.isCorrect ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                        }">
-                            ${item.isCorrect ? 'Correcta ✅' : 'Incorrecta ❌'}
-                        </span>
-                    </div>
-                    ${
-                        item.isCorrect 
-                            ? `<p class="text-xs text-emerald-400 font-medium">Respuesta: ${item.selectedText}</p>`
-                            : `<div class="text-xs space-y-1">
-                                 <p class="text-rose-400"><strong>Tu respuesta:</strong> ${item.selectedText}</p>
-                                 <p class="text-emerald-400"><strong>Respuesta correcta:</strong> ${item.correctText}</p>
-                               </div>`
-                    }
-                `;
-                reviewContainer.appendChild(card);
-            });
-
-            lucide.createIcons();
-        }
-
-        function sendToGoogleSheet(accuracy) {
-            const statusEl = document.getElementById('sending-status');
-            if (statusEl) {
-                statusEl.innerText = "⏳ Guardando resultado en Google Sheets...";
-                statusEl.style.color = "#F59E0B";
-            }
-
-            // Enviar la respuesta EXACTA seleccionada para cada celda
-            const respuestasArray = userAnswersHistory.map(item => item.selectedText);
-
-            fetch(SCRIPT_URL, {
-                method: 'POST', 
-                mode: 'no-cors', 
+            // Enviar datos a Google Sheets
+            fetch(URL_APPS_SCRIPT, {
+                method: 'POST',
+                mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    fecha: new Date().toLocaleString(), 
-                    nombre: playerData.name, 
-                    numEmpleado: playerData.id, 
-                    rol: playerData.role, 
-                    nivel: playerData.level, 
-                    aciertos: `${score}/${activeQuestions.length}`, 
-                    precision: `${accuracy}%`, 
-                    tiempo: totalSeconds,
-                    respuestasArray: respuestasArray
+                body: JSON.stringify({
+                    idEmpleado: datosEmpleado.numEmpleado,
+                    nombre: datosEmpleado.nombre,
+                    rol: datosEmpleado.rol,
+                    puntaje: puntaje,
+                    porcentaje: porcentaje,
+                    correctas: porcentaje >= 80 ? 1 : 0,
+                    incorrectas: porcentaje < 80 ? 1 : 0,
+                    tiempoSegundos: tiempoTotalSeg
                 })
-            }).then(() => {
-                if (statusEl) {
-                    statusEl.innerText = "✅ ¡Respuestas guardadas celda por celda en Google Sheets!";
-                    statusEl.style.color = "#10B981";
-                }
-            }).catch(() => { 
-                if (statusEl) {
-                    statusEl.innerText = "✅ ¡Registro enviado a la hoja de cálculo!"; 
-                    statusEl.style.color = "#10B981"; 
-                }
-            });
+            }).catch(err => console.error("Error al registrar:", err));
+        }
+
+        function reiniciarEvaluacion() {
+            document.getElementById('pantallaResultados').classList.add('hidden');
+            document.getElementById('pantallaRegistro').classList.remove('hidden');
+            document.getElementById('formRegistro').reset();
+            document.getElementById('barraProgresoPista').style.width = '10%';
+            document.getElementById('avatarPista').style.left = '10%';
         }
     </script>
 </body>
