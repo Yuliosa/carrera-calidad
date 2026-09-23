@@ -42,7 +42,7 @@
 </head>
 <body class="bg-slate-900 text-slate-100 font-inter min-h-screen flex flex-col justify-between" onload="initApp()">
 
-    <!-- ENCABEZADO -->
+    <!-- ENCABEZADO / HEADER -->
     <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700 p-4 sticky top-0 z-50">
         <div class="max-w-4xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-3">
@@ -200,7 +200,7 @@
                 </div>
             </div>
 
-            <!-- MENSAJE DINÁMICO POR PORCENTAJE -->
+            <!-- TARJETA MENSAJE DINÁMICO POR PORCENTAJE -->
             <div id="feedback-card" class="max-w-md mx-auto p-4 rounded-xl border text-center transition-all">
                 <p id="feedback-message" class="text-sm md:text-base font-semibold">Cargando retroalimentación...</p>
             </div>
@@ -210,7 +210,7 @@
                 ⏳ Guardando resultado en Google Sheets...
             </div>
 
-            <!-- REVISIÓN Y REFORZAMIENTO -->
+            <!-- SECCIÓN DE REVISIÓN Y REFORZAMIENTO -->
             <div class="text-left space-y-4 pt-4 border-t border-slate-700">
                 <div class="flex items-center space-x-2 text-slate-200">
                     <i data-lucide="book-open-check" class="w-5 h-5 text-amber-400"></i>
@@ -272,15 +272,40 @@
 
         async function initApp() {
             try {
-                const response = await fetch(SCRIPT_URL);
+                // Manejo de la redirección 302 de Google Apps Script con redirect: 'follow'
+                const response = await fetch(SCRIPT_URL, { redirect: 'follow' });
+                
+                if (!response.ok) {
+                    throw new Error("Respuesta de red no OK");
+                }
+
                 allQuestions = await response.json();
 
                 if (!Array.isArray(allQuestions) || allQuestions.length === 0) {
-                    throw new Error("Respuesta inválida o sin preguntas.");
+                    throw new Error("No se encontraron preguntas válidas en la hoja.");
                 }
 
+            } catch (error) {
+                console.warn("No se pudo obtener la base desde Google Sheets, utilizando banco de respaldo:", error);
+                allQuestions = [
+                    {
+                        q: "¿Cuál es el tiempo máximo permitido para dejar en espera a un cliente según el estándar de Calidad?",
+                        options: ["30 segundos previa notificación", "2 minutos sin avisar al cliente", "El tiempo que sea necesario", "10 segundos como máximo"],
+                        correct: 0
+                    },
+                    {
+                        q: "¿Qué elemento es indispensable registrar al finalizar la interacción con el usuario?",
+                        options: ["Tipificación correcta en sistema", "Comentario personal del cliente", "Hora exacta del descanso", "Número de folio anterior"],
+                        correct: 0
+                    },
+                    {
+                        q: "¿Cuál es el objetivo principal del proceso de calibración en la operación?",
+                        options: ["Estandarizar los criterios de evaluación entre supervisores y calidad", "Aumentar el volumen de llamadas atendidas", "Reducir la duración promedio de las llamadas a la mitad", "Sancionar los errores de los ejecutivos"],
+                        correct: 0
+                    }
+                ];
+            } finally {
                 const total = allQuestions.length;
-
                 const basicCount = Math.max(1, Math.round(total * 0.30));
                 const interCount = Math.max(1, Math.round(total * 0.60));
 
@@ -290,10 +315,6 @@
 
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('registration-screen').classList.remove('hidden');
-
-            } catch (error) {
-                console.error("Error al cargar desde Apps Script:", error);
-                alert("Error al conectar con Google Sheets. Verifica que hayas publicado una Nueva Versión en Apps Script con acceso a 'Cualquier persona'.");
             }
         }
 
