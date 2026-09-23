@@ -1,219 +1,216 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gran Premio de Calidad - Carrera de Trivia</title>
-<!-- Tailwind CSS para diseño moderno -->
-<script src="https://cdn.tailwindcss.com"></script>
-<!-- Canvas Confetti para celebración final -->
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-<!-- Lucide Icons -->
-<script src="https://unpkg.com/lucide@latest"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Inter:wght@400;600;700&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivia Runner Pro - Carrera de Calidad</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Inter:wght@400;600;700&display=swap');
 
-.font-orbitron { font-family: 'Orbitron', sans-serif; }
-.font-inter { font-family: 'Inter', sans-serif; }
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
 
-/* Estilo de la pista de carreras */
-.track-pattern {
-background-color: #1e293b;
-background-image: linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
-background-size: 20px 100%;
-}
+        .track-pattern {
+            background-color: #1e293b;
+            background-image: linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 20px 100%;
+        }
 
-.finish-line {
-background: repeating-linear-gradient(
-45deg,
-#000,
-#000 10px,
-#fff 10px,
-#fff 20px
-);
-}
+        .finish-line {
+            background: repeating-linear-gradient(
+                45deg,
+                #000,
+                #000 10px,
+                #fff 10px,
+                #fff 20px
+            );
+        }
 
-        /* Transición suave para el avance del auto */
-        /* Transición suave y orientación hacia la derecha del auto */
-.car-transition {
-transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-            transform: scaleX(-1); /* Gira el emoji para que mire a la meta */
+        .car-transition {
+            transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: scaleX(-1);
             display: inline-block;
-}
-</style>
+        }
+    </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-inter min-h-screen flex flex-col justify-between" onload="initApp()">
 
-<!-- ENCABEZADO / HEADER -->
-<header class="bg-slate-800/80 backdrop-blur border-b border-slate-700 p-4 sticky top-0 z-50">
-<div class="max-w-4xl mx-auto flex justify-between items-center">
-<div class="flex items-center space-x-3">
-<i data-lucide="trophy" class="text-amber-400 w-7 h-7"></i>
-<h1 class="font-orbitron text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
-TRIVIA RUNNER PRO
-</h1>
-</div>
-<div id="game-stats" class="hidden flex items-center space-x-6 text-sm font-semibold">
-<div class="flex items-center space-x-2 text-slate-300">
-<i data-lucide="clock" class="w-4 h-4 text-cyan-400"></i>
-<span id="timer-display">00:00</span>
-</div>
-<div class="flex items-center space-x-2 text-slate-300">
-<i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
-<span id="score-display">0/0</span>
-</div>
-</div>
-</div>
-</header>
+    <!-- ENCABEZADO -->
+    <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700 p-4 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i data-lucide="trophy" class="text-amber-400 w-7 h-7"></i>
+                <h1 class="font-orbitron text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
+                    TRIVIA RUNNER PRO
+                </h1>
+            </div>
+            <div id="game-stats" class="hidden flex items-center space-x-6 text-sm font-semibold">
+                <div class="flex items-center space-x-2 text-slate-300">
+                    <i data-lucide="clock" class="w-4 h-4 text-cyan-400"></i>
+                    <span id="timer-display">00:00</span>
+                </div>
+                <div class="flex items-center space-x-2 text-slate-300">
+                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+                    <span id="score-display">0/0</span>
+                </div>
+            </div>
+        </div>
+    </header>
 
-<!-- CONTENIDO PRINCIPAL -->
-<main class="max-w-4xl mx-auto w-full p-4 flex-grow flex flex-col justify-center">
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="max-w-4xl mx-auto w-full p-4 flex-grow flex flex-col justify-center">
 
-<!-- PANTALLA CARGANDO INICIAL -->
-<section id="loading-screen" class="text-center py-16 space-y-4">
-<div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-400 border-t-transparent"></div>
-<p class="text-slate-300 font-semibold text-lg">Cargando preguntas desde Google Sheets...</p>
-</section>
+        <!-- PANTALLA CARGANDO INICIAL -->
+        <section id="loading-screen" class="text-center py-16 space-y-4">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-400 border-t-transparent"></div>
+            <p class="text-slate-300 font-semibold text-lg">Cargando preguntas desde Google Sheets...</p>
+        </section>
 
-<!-- PANTALLA 1: REGISTRO Y SELECCIÓN DE NIVEL -->
-<section id="registration-screen" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
-<div class="text-center space-y-2">
-<h2 class="font-orbitron text-2xl md:text-3xl font-bold text-slate-100">Registro de Piloto</h2>
-<p class="text-slate-400 text-sm">Ingresa tus datos e identifica tu nivel de calibración para iniciar la carrera.</p>
-</div>
+        <!-- PANTALLA 1: REGISTRO Y SELECCIÓN DE NIVEL -->
+        <section id="registration-screen" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <h2 class="font-orbitron text-2xl md:text-3xl font-bold text-slate-100">Registro de Piloto</h2>
+                <p class="text-slate-400 text-sm">Ingresa tus datos e identifica tu nivel de calibración para iniciar la carrera.</p>
+            </div>
 
-<form id="start-form" onsubmit="startGame(event)" class="space-y-4 max-w-md mx-auto">
-<div>
-<label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Nombre Completo</label>
-<input type="text" id="player-name" required placeholder="Ej. Ana Martínez" 
-class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition">
-</div>
+            <form id="start-form" onsubmit="startGame(event)" class="space-y-4 max-w-md mx-auto">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Nombre Completo</label>
+                    <input type="text" id="player-name" required placeholder="Ej. Ana Martínez" 
+                           class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition">
+                </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-<div>
-<label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">ID / N° Empleado</label>
-<input type="text" id="player-id" required placeholder="Ej. 10294" 
-class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition">
-</div>
-<div>
-<label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Rol / Área</label>
-<select id="player-role" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition">
-<option value="">Selecciona...</option>
-<option value="Agente">Agente de Operaciones</option>
-<option value="Analista de Calidad">Analista de Calidad</option>
-<option value="Supervisor">Supervisor de Operaciones</option>
-<option value="Capacitador">Capacitador / Trainer</option>
-</select>
-</div>
-</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">ID / N° Empleado</label>
+                        <input type="text" id="player-id" required placeholder="Ej. 10294" 
+                               class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Rol / Área</label>
+                        <select id="player-role" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-400 transition">
+                            <option value="">Selecciona...</option>
+                            <option value="Agente">Agente de Operaciones</option>
+                            <option value="Analista de Calidad">Analista de Calidad</option>
+                            <option value="Supervisor">Supervisor de Operaciones</option>
+                            <option value="Capacitador">Capacitador / Trainer</option>
+                        </select>
+                    </div>
+                </div>
 
-<div>
-<label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Nivel de Desafío (Dificultad)</label>
-<div class="grid grid-cols-3 gap-3">
-<label class="cursor-pointer">
-<input type="radio" name="game-level" value="Básico" checked class="peer sr-only">
-<div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center peer-checked:border-amber-400 peer-checked:bg-amber-400/10 transition">
-<div class="font-bold text-amber-400 text-sm">Básico</div>
-<div id="lbl-basic" class="text-[10px] text-slate-400 mt-0.5">Calculando...</div>
-</div>
-</label>
-<label class="cursor-pointer">
-<input type="radio" name="game-level" value="Intermedio" class="peer sr-only">
-<div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center peer-checked:border-amber-400 peer-checked:bg-amber-400/10 transition">
-<div class="font-bold text-amber-400 text-sm">Intermedio</div>
-<div id="lbl-intermediate" class="text-[10px] text-slate-400 mt-0.5">Calculando...</div>
-</div>
-</label>
-<label class="cursor-pointer">
-<input type="radio" name="game-level" value="Avanzado / Pro" class="peer sr-only">
-<div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center peer-checked:border-amber-400 peer-checked:bg-amber-400/10 transition">
-<div class="font-bold text-amber-400 text-sm">Pro</div>
-<div id="lbl-pro" class="text-[10px] text-slate-400 mt-0.5">Calculando...</div>
-</div>
-</label>
-</div>
-</div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Nivel de Desafío (Dificultad)</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="game-level" value="Básico" checked class="peer sr-only">
+                            <div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center peer-checked:border-amber-400 peer-checked:bg-amber-400/10 transition">
+                                <div class="font-bold text-amber-400 text-sm">Básico</div>
+                                <div id="lbl-basic" class="text-[10px] text-slate-400 mt-0.5">Calculando...</div>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="game-level" value="Intermedio" class="peer sr-only">
+                            <div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center peer-checked:border-amber-400 peer-checked:bg-amber-400/10 transition">
+                                <div class="font-bold text-amber-400 text-sm">Intermedio</div>
+                                <div id="lbl-intermediate" class="text-[10px] text-slate-400 mt-0.5">Calculando...</div>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="game-level" value="Avanzado / Pro" class="peer sr-only">
+                            <div class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-center peer-checked:border-amber-400 peer-checked:bg-amber-400/10 transition">
+                                <div class="font-bold text-amber-400 text-sm">Pro</div>
+                                <div id="lbl-pro" class="text-[10px] text-slate-400 mt-0.5">Calculando...</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
 
-<button type="submit" 
-class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-orbitron font-black py-4 rounded-xl shadow-lg transition transform active:scale-98 flex items-center justify-center space-x-2 text-lg mt-6">
-<span>¡INICIAR CARRERA!</span>
-<i data-lucide="play" class="w-5 h-5 fill-current"></i>
-</button>
-</form>
-</section>
+                <button type="submit" 
+                        class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-orbitron font-black py-4 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center space-x-2 text-lg mt-6">
+                    <span>¡INICIAR CARRERA!</span>
+                    <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                </button>
+            </form>
+        </section>
 
-<!-- PANTALLA 2: JUEGO EN VIVO -->
-<section id="game-screen" class="hidden space-y-6">
-<!-- PISTA DE CARRERAS -->
-<div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl">
-<div class="flex justify-between text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
-<span>Línea de Salida</span>
-<span>Progreso de Pista</span>
-<span>Meta 🏁</span>
-</div>
-<div class="relative h-16 track-pattern rounded-xl border border-slate-700 overflow-hidden flex items-center px-2">
-<div class="absolute right-0 top-0 bottom-0 w-6 finish-line opacity-80"></div>
-<div id="car-player" class="absolute left-2 car-transition text-3xl filter drop-shadow-md z-10" style="left: 2%;">
-🏎️
-</div>
-</div>
-</div>
+        <!-- PANTALLA 2: JUEGO EN VIVO -->
+        <section id="game-screen" class="hidden space-y-6">
+            <!-- PISTA DE CARRERAS -->
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl">
+                <div class="flex justify-between text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
+                    <span>Línea de Salida</span>
+                    <span>Progreso de Pista</span>
+                    <span>Meta 🏁</span>
+                </div>
+                <div class="relative h-16 track-pattern rounded-xl border border-slate-700 overflow-hidden flex items-center px-2">
+                    <div class="absolute right-0 top-0 bottom-0 w-6 finish-line opacity-80"></div>
+                    <div id="car-player" class="absolute left-2 car-transition text-3xl filter drop-shadow-md z-10" style="left: 2%;">
+                        🏎️
+                    </div>
+                </div>
+            </div>
 
-<!-- TARJETA DE PREGUNTA -->
-<div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
-<div class="flex justify-between items-center text-xs font-bold text-amber-400 uppercase tracking-widest">
-<span id="question-number">Pregunta 1 de 10</span>
-<span id="level-badge" class="bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full">Nivel: Básico</span>
-</div>
+            <!-- TARJETA DE PREGUNTA -->
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
+                <div class="flex justify-between items-center text-xs font-bold text-amber-400 uppercase tracking-widest">
+                    <span id="question-number">Pregunta 1 de 10</span>
+                    <span id="level-badge" class="bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full">Nivel: Básico</span>
+                </div>
 
-<h3 id="question-text" class="text-lg md:text-xl font-bold text-slate-100 min-h-[3rem] flex items-center">
-Cargando pregunta...
-</h3>
+                <h3 id="question-text" class="text-lg md:text-xl font-bold text-slate-100 min-h-[3rem] flex items-center">
+                    Cargando pregunta...
+                </h3>
 
-<!-- OPCIONES DE RESPUESTA -->
-<div id="options-container" class="grid grid-cols-1 gap-3"></div>
-</div>
-</section>
+                <!-- OPCIONES DE RESPUESTA -->
+                <div id="options-container" class="grid grid-cols-1 gap-3"></div>
+            </div>
+        </section>
 
-        <!-- PANTALLA 3: RESULTADOS / PODIO -->
-        <!-- PANTALLA 3: RESULTADOS / REVISIÓN Y REFORZAMIENTO -->
-<section id="results-screen" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl text-center space-y-6">
-<div class="inline-block p-4 bg-amber-400/10 rounded-full text-amber-400 mb-2">
-<i data-lucide="award" class="w-16 h-16 mx-auto"></i>
-</div>
+        <!-- PANTALLA 3: RESULTADOS -->
+        <section id="results-screen" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl text-center space-y-6">
+            <div class="inline-block p-4 bg-amber-400/10 rounded-full text-amber-400 mb-2">
+                <i data-lucide="award" class="w-16 h-16 mx-auto"></i>
+            </div>
 
-<div class="space-y-2">
-<h2 class="font-orbitron text-3xl font-black text-slate-100">¡CARRERA FINALIZADA!</h2>
-<p id="player-congrats" class="text-slate-300 font-semibold">¡Excelente desempeño en la pista!</p>
-</div>
+            <div class="space-y-2">
+                <h2 class="font-orbitron text-3xl font-black text-slate-100">¡CARRERA FINALIZADA!</h2>
+                <p id="player-congrats" class="text-slate-300 font-semibold">¡Excelente desempeño en la pista!</p>
+            </div>
 
-<!-- TABLERO DE MÉTRICAS -->
-<div class="grid grid-cols-3 gap-4 max-w-md mx-auto bg-slate-900 border border-slate-700 rounded-xl p-4">
-<div>
-<div class="text-xs text-slate-400 uppercase font-bold">Aciertos</div>
-<div id="final-score" class="font-orbitron text-xl font-bold text-amber-400 mt-1">0/0</div>
-</div>
-<div>
-<div class="text-xs text-slate-400 uppercase font-bold">Precisión</div>
-<div id="final-accuracy" class="font-orbitron text-xl font-bold text-emerald-400 mt-1">0%</div>
-</div>
-<div>
-<div class="text-xs text-slate-400 uppercase font-bold">Tiempo</div>
-<div id="final-time" class="font-orbitron text-xl font-bold text-cyan-400 mt-1">0s</div>
-</div>
-</div>
+            <!-- TABLERO DE MÉTRICAS -->
+            <div class="grid grid-cols-3 gap-4 max-w-md mx-auto bg-slate-900 border border-slate-700 rounded-xl p-4">
+                <div>
+                    <div class="text-xs text-slate-400 uppercase font-bold">Aciertos</div>
+                    <div id="final-score" class="font-orbitron text-xl font-bold text-amber-400 mt-1">0/0</div>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400 uppercase font-bold">Precisión</div>
+                    <div id="final-accuracy" class="font-orbitron text-xl font-bold text-emerald-400 mt-1">0%</div>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400 uppercase font-bold">Tiempo</div>
+                    <div id="final-time" class="font-orbitron text-xl font-bold text-cyan-400 mt-1">0s</div>
+                </div>
+            </div>
 
-<!-- TARJETA MENSAJE DINÁMICO POR PORCENTAJE DE PRECISIÓN -->
-<div id="feedback-card" class="max-w-md mx-auto p-4 rounded-xl border text-center transition-all">
-<p id="feedback-message" class="text-sm md:text-base font-semibold">Cargando retroalimentación...</p>
-</div>
+            <!-- MENSAJE DINÁMICO POR PORCENTAJE -->
+            <div id="feedback-card" class="max-w-md mx-auto p-4 rounded-xl border text-center transition-all">
+                <p id="feedback-message" class="text-sm md:text-base font-semibold">Cargando retroalimentación...</p>
+            </div>
 
-<!-- ESTADO DE ENVÍO A GOOGLE SHEETS -->
-<div id="sending-status" class="text-sm font-semibold text-slate-400 pt-2">
-⏳ Guardando resultado en Google Sheets...
-</div>
+            <!-- ESTADO DE ENVÍO -->
+            <div id="sending-status" class="text-sm font-semibold text-slate-400 pt-2">
+                ⏳ Guardando resultado en Google Sheets...
+            </div>
 
-            <!-- SECCIÓN DE REVISIÓN Y REFORZAMIENTO -->
+            <!-- REVISIÓN Y REFORZAMIENTO -->
             <div class="text-left space-y-4 pt-4 border-t border-slate-700">
                 <div class="flex items-center space-x-2 text-slate-200">
                     <i data-lucide="book-open-check" class="w-5 h-5 text-amber-400"></i>
@@ -224,164 +221,144 @@ Cargando pregunta...
                 <div id="review-container" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
             </div>
 
-<button onclick="location.reload()" 
-                    class="bg-slate-700 hover:bg-slate-600 text-slate-100 font-orbitron font-bold py-3 px-8 rounded-xl transition transform active:scale-95 inline-flex items-center space-x-2">
+            <button onclick="location.reload()" 
                     class="bg-slate-700 hover:bg-slate-600 text-slate-100 font-orbitron font-bold py-3 px-8 rounded-xl transition transform active:scale-95 inline-flex items-center space-x-2 mt-4">
-<i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-<span>JUGAR DE NUEVO</span>
-</button>
-</section>
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                <span>JUGAR DE NUEVO</span>
+            </button>
+        </section>
 
-</main>
+    </main>
 
-<!-- PIE DE PÁGINA -->
-<footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800">
-Sistema de Evaluación y Calibración Operativa • Gestión de Calidad
-</footer>
+    <!-- PIE DE PÁGINA -->
+    <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800">
+        Sistema de Evaluación y Calibración Operativa • Gestión de Calidad
+    </footer>
 
-<script>
-// ==========================================
-// 1. CONFIGURACIÓN DEL GOOGLE APPS SCRIPT
-// ==========================================
-        // REEMPLAZA ESTA URL CON TU WEB APP URL DESPLEGADA DE GOOGLE SHEETS
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCjdhak5cdBrwQozEppw7oAExbYSH1euqDyEGFOdMK-Ulzp5IK76LeHifQjjiNzzgnZA/exec";
+    <script>
+        // 1. URL DE TU DEPLOY EN GOOGLE APPS SCRIPT
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzD84_MI4Bt4oVEq5qZbAK2aDBdOfY1r6tDBwcEbVrX0u6f647Ry3qZURQxB9GdmN8AIw/exec";
 
-// ==========================================
-// 2. VARIABLES DE ESTADO
-// ==========================================
-let allQuestions = [];
-let activeQuestions = [];
-let currentQuestionIndex = 0;
-let score = 0;
-let totalSeconds = 0;
-let timerInterval = null;
+        let allQuestions = [];
+        let activeQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let totalSeconds = 0;
+        let timerInterval = null;
         let userAnswersHistory = [];
 
-let playerData = {
-name: '',
-id: '',
-role: '',
-level: ''
-};
+        let playerData = {
+            name: '',
+            id: '',
+            role: '',
+            level: ''
+        };
 
-lucide.createIcons();
+        lucide.createIcons();
 
-// Audio Effects
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playSound(freq, duration) {
-try {
-const osc = audioCtx.createOscillator();
-const gain = audioCtx.createGain();
-osc.connect(gain);
-gain.connect(audioCtx.destination);
-osc.frequency.value = freq;
-gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-osc.start();
-osc.stop(audioCtx.currentTime + duration);
-} catch(e){}
-}
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(freq, duration) {
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e){}
+        }
 
-// ==========================================
-        // 3. INICIALIZACIÓN DINÁMICA POR PORCENTAJE
-        // 3. INICIALIZACIÓN DINÁMICA
-// ==========================================
-async function initApp() {
-try {
-const response = await fetch(SCRIPT_URL);
-allQuestions = await response.json();
+        async function initApp() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                allQuestions = await response.json();
 
-const total = allQuestions.length;
+                const total = allQuestions.length;
 
-                // Cálculo del 30% y 60% redondeado
-const basicCount = Math.max(1, Math.round(total * 0.30));
-const interCount = Math.max(1, Math.round(total * 0.60));
+                const basicCount = Math.max(1, Math.round(total * 0.30));
+                const interCount = Math.max(1, Math.round(total * 0.60));
 
-                // Actualización de textos dinámicos en la pantalla de inicio
-document.getElementById('lbl-basic').innerText = `${basicCount} Preguntas (30%)`;
-document.getElementById('lbl-intermediate').innerText = `${interCount} Preguntas (60%)`;
-document.getElementById('lbl-pro').innerText = `${total} Preguntas (100%)`;
+                document.getElementById('lbl-basic').innerText = `${basicCount} Preguntas (30%)`;
+                document.getElementById('lbl-intermediate').innerText = `${interCount} Preguntas (60%)`;
+                document.getElementById('lbl-pro').innerText = `${total} Preguntas (100%)`;
 
-document.getElementById('loading-screen').classList.add('hidden');
-document.getElementById('registration-screen').classList.remove('hidden');
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('registration-screen').classList.remove('hidden');
 
-} catch (error) {
-alert("Error al conectar con Google Sheets. Revisa tu URL de despliegue.");
-}
-}
+            } catch (error) {
+                alert("Error al conectar con Google Sheets. Revisa tu URL de despliegue.");
+            }
+        }
 
-function startGame(e) {
-e.preventDefault();
+        function startGame(e) {
+            e.preventDefault();
 
-playerData.name = document.getElementById('player-name').value.trim();
-playerData.id = document.getElementById('player-id').value.trim();
-playerData.role = document.getElementById('player-role').value;
-playerData.level = document.querySelector('input[name="game-level"]:checked').value;
+            playerData.name = document.getElementById('player-name').value.trim();
+            playerData.id = document.getElementById('player-id').value.trim();
+            playerData.role = document.getElementById('player-role').value;
+            playerData.level = document.querySelector('input[name="game-level"]:checked').value;
 
-            // Selección dinámica proporcional a la base total
-const total = allQuestions.length;
+            const total = allQuestions.length;
 
-if (playerData.level === 'Básico') {
-const count = Math.max(1, Math.round(total * 0.30));
-activeQuestions = allQuestions.slice(0, count);
-} else if (playerData.level === 'Intermedio') {
-const count = Math.max(1, Math.round(total * 0.60));
-activeQuestions = allQuestions.slice(0, count);
-} else {
-                activeQuestions = allQuestions; // Pro (100%)
+            if (playerData.level === 'Básico') {
+                const count = Math.max(1, Math.round(total * 0.30));
+                activeQuestions = allQuestions.slice(0, count);
+            } else if (playerData.level === 'Intermedio') {
+                const count = Math.max(1, Math.round(total * 0.60));
+                activeQuestions = allQuestions.slice(0, count);
+            } else {
                 activeQuestions = allQuestions;
-}
+            }
 
             userAnswersHistory = [];
-document.getElementById('registration-screen').classList.add('hidden');
-document.getElementById('game-screen').classList.remove('hidden');
-document.getElementById('game-stats').classList.remove('hidden');
-document.getElementById('level-badge').innerText = `Nivel: ${playerData.level}`;
+            document.getElementById('registration-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('game-stats').classList.remove('hidden');
+            document.getElementById('level-badge').innerText = `Nivel: ${playerData.level}`;
 
-startTimer();
-renderQuestion();
-}
+            startTimer();
+            renderQuestion();
+        }
 
-function startTimer() {
-timerInterval = setInterval(() => {
-totalSeconds++;
-const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-const secs = String(totalSeconds % 60).padStart(2, '0');
-document.getElementById('timer-display').innerText = `${mins}:${secs}`;
-}, 1000);
-}
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                totalSeconds++;
+                const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+                const secs = String(totalSeconds % 60).padStart(2, '0');
+                document.getElementById('timer-display').innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
 
-// ==========================================
-// 4. DESARROLLO DE LA TRIVIA
-// ==========================================
-function renderQuestion() {
-const q = activeQuestions[currentQuestionIndex];
+        function renderQuestion() {
+            const q = activeQuestions[currentQuestionIndex];
 
-document.getElementById('question-number').innerText = `Pregunta ${currentQuestionIndex + 1} de ${activeQuestions.length}`;
-document.getElementById('score-display').innerText = `${score}/${activeQuestions.length}`;
-document.getElementById('question-text').innerText = q.q;
+            document.getElementById('question-number').innerText = `Pregunta ${currentQuestionIndex + 1} de ${activeQuestions.length}`;
+            document.getElementById('score-display').innerText = `${score}/${activeQuestions.length}`;
+            document.getElementById('question-text').innerText = q.q;
 
-const container = document.getElementById('options-container');
-container.innerHTML = '';
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
 
-q.options.forEach((opt, idx) => {
-const btn = document.createElement('button');
-btn.className = "w-full text-left bg-slate-900/80 hover:bg-slate-700/80 border border-slate-700/80 hover:border-amber-400/50 p-4 rounded-xl font-semibold transition text-slate-200 flex items-center justify-between group";
-btn.onclick = () => selectOption(idx);
-btn.innerHTML = `
-                   <span>${opt}</span>
-                   <span class="text-xs font-mono bg-slate-800 group-hover:bg-amber-400 group-hover:text-slate-950 px-2 py-1 rounded text-slate-400 transition">Opción ${idx+1}</span>
-               `;
-container.appendChild(btn);
-});
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left bg-slate-900/80 hover:bg-slate-700/80 border border-slate-700/80 hover:border-amber-400/50 p-4 rounded-xl font-semibold transition text-slate-200 flex items-center justify-between group";
+                btn.onclick = () => selectOption(idx);
+                btn.innerHTML = `
+                    <span>${opt}</span>
+                    <span class="text-xs font-mono bg-slate-800 group-hover:bg-amber-400 group-hover:text-slate-950 px-2 py-1 rounded text-slate-400 transition">Opción ${idx+1}</span>
+                `;
+                container.appendChild(btn);
+            });
 
-const progressPercent = (currentQuestionIndex / activeQuestions.length) * 85 + 2;
-document.getElementById('car-player').style.left = `${progressPercent}%`;
-}
+            const progressPercent = (currentQuestionIndex / activeQuestions.length) * 85 + 2;
+            document.getElementById('car-player').style.left = `${progressPercent}%`;
+        }
 
-function selectOption(selectedIdx) {
-const q = activeQuestions[currentQuestionIndex];
-const isCorrect = (selectedIdx === q.correct);
+        function selectOption(selectedIdx) {
+            const q = activeQuestions[currentQuestionIndex];
+            const isCorrect = (selectedIdx === q.correct);
 
             userAnswersHistory.push({
                 question: q.q,
@@ -390,64 +367,59 @@ const isCorrect = (selectedIdx === q.correct);
                 isCorrect: isCorrect
             });
 
-if (isCorrect) {
-score++;
-playSound(600, 0.1);
-} else {
-playSound(200, 0.2);
-}
+            if (isCorrect) {
+                score++;
+                playSound(600, 0.1);
+            } else {
+                playSound(200, 0.2);
+            }
 
-currentQuestionIndex++;
+            currentQuestionIndex++;
 
-if (currentQuestionIndex < activeQuestions.length) {
-renderQuestion();
-} else {
-finishGame();
-}
-}
+            if (currentQuestionIndex < activeQuestions.length) {
+                renderQuestion();
+            } else {
+                finishGame();
+            }
+        }
 
-// ==========================================
-        // 5. FINALIZACIÓN Y RETROALIMENTACIÓN
-        // 5. FINALIZACIÓN Y ENVÍO ESTRUCTURADO
-// ==========================================
-function finishGame() {
-clearInterval(timerInterval);
+        function finishGame() {
+            clearInterval(timerInterval);
 
-document.getElementById('car-player').style.left = '88%';
+            document.getElementById('car-player').style.left = '88%';
 
-document.getElementById('game-screen').classList.add('hidden');
-document.getElementById('results-screen').classList.remove('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('results-screen').classList.remove('hidden');
 
-const accuracy = Math.round((score / activeQuestions.length) * 100);
+            const accuracy = Math.round((score / activeQuestions.length) * 100);
 
-document.getElementById('player-congrats').innerText = `¡Felicidades, ${playerData.name}! Has completado el circuito.`;
-document.getElementById('final-score').innerText = `${score}/${activeQuestions.length}`;
-document.getElementById('final-accuracy').innerText = `${accuracy}%`;
-document.getElementById('final-time').innerText = `${totalSeconds}s`;
+            document.getElementById('player-congrats').innerText = `¡Felicidades, ${playerData.name}! Has completado el circuito.`;
+            document.getElementById('final-score').innerText = `${score}/${activeQuestions.length}`;
+            document.getElementById('final-accuracy').innerText = `${accuracy}%`;
+            document.getElementById('final-time').innerText = `${totalSeconds}s`;
 
-            // MENSAJE DINÁMICO POR PORCENTAJE
-const feedbackCard = document.getElementById('feedback-card');
-const feedbackMsg = document.getElementById('feedback-message');
+            const feedbackCard = document.getElementById('feedback-card');
+            const feedbackMsg = document.getElementById('feedback-message');
 
-if (accuracy === 100) {
-feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-emerald-500/50 bg-emerald-500/10 text-emerald-400 font-bold";
-feedbackMsg.innerText = "🏆 ¡Calibración Impecable! Dominio total de los procesos y políticas de calidad.";
-confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
-} else if (accuracy >= 80) {
-feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-cyan-500/50 bg-cyan-500/10 text-cyan-300 font-semibold";
-feedbackMsg.innerText = "🥇 ¡Gran desempeño! Tienes un conocimiento muy sólido de la operación.";
-confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
-} else if (accuracy >= 60) {
-feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-amber-500/50 bg-amber-500/10 text-amber-300 font-medium";
-feedbackMsg.innerText = "⚠️ ¡Buen esfuerzo! Hay algunos puntos específicos que vale la pena reforzar.";
-} else {
-feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-rose-500/50 bg-rose-500/10 text-rose-300 font-medium";
-feedbackMsg.innerText = "🚨 Requiere Reforzamiento. Te recomendamos repasar los procedimientos con tu equipo de Calidad.";
-}
+            if (accuracy === 100) {
+                feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-emerald-500/50 bg-emerald-500/10 text-emerald-400 font-bold";
+                feedbackMsg.innerText = "🏆 ¡Calibración Impecable! Dominio total de los procesos y políticas de calidad.";
+                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+            } else if (accuracy >= 80) {
+                feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-cyan-500/50 bg-cyan-500/10 text-cyan-300 font-semibold";
+                feedbackMsg.innerText = "🥇 ¡Gran desempeño! Tienes un conocimiento muy sólido de la operación.";
+                confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+            } else if (accuracy >= 60) {
+                feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-amber-500/50 bg-amber-500/10 text-amber-300 font-medium";
+                feedbackMsg.innerText = "⚠️ ¡Buen esfuerzo! Hay algunos puntos específicos que vale la pena reforzar.";
+            } else {
+                feedbackCard.className = "max-w-md mx-auto p-4 rounded-xl border border-rose-500/50 bg-rose-500/10 text-rose-300 font-medium";
+                feedbackMsg.innerText = "🚨 Requiere Reforzamiento. Te recomendamos repasar los procedimientos con tu equipo de Calidad.";
+            }
 
             renderReviewSection();
-sendToGoogleSheet(accuracy);
-}
+            sendToGoogleSheet(accuracy);
+        }
 
         function renderReviewSection() {
             const reviewContainer = document.getElementById('review-container');
@@ -485,45 +457,42 @@ sendToGoogleSheet(accuracy);
             lucide.createIcons();
         }
 
-function sendToGoogleSheet(accuracy) {
-const statusEl = document.getElementById('sending-status');
-if (statusEl) {
-statusEl.innerText = "⏳ Guardando resultado en Google Sheets...";
-statusEl.style.color = "#F59E0B";
-}
+        function sendToGoogleSheet(accuracy) {
+            const statusEl = document.getElementById('sending-status');
+            if (statusEl) {
+                statusEl.innerText = "⏳ Guardando resultado en Google Sheets...";
+                statusEl.style.color = "#F59E0B";
+            }
 
-            // Enviar la respuesta EXACTA seleccionada para cada celda
             const respuestasArray = userAnswersHistory.map(item => item.selectedText);
 
-fetch(SCRIPT_URL, {
-method: 'POST', 
-mode: 'no-cors', 
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ 
-fecha: new Date().toLocaleString(), 
-nombre: playerData.name, 
-numEmpleado: playerData.id, 
-rol: playerData.role, 
-nivel: playerData.level, 
-aciertos: `${score}/${activeQuestions.length}`, 
-precision: `${accuracy}%`, 
-                    tiempo: totalSeconds 
+            fetch(SCRIPT_URL, {
+                method: 'POST', 
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    fecha: new Date().toLocaleString(), 
+                    nombre: playerData.name, 
+                    numEmpleado: playerData.id, 
+                    rol: playerData.role, 
+                    nivel: playerData.level, 
+                    aciertos: `${score}/${activeQuestions.length}`, 
+                    precision: `${accuracy}%`, 
                     tiempo: totalSeconds,
                     respuestasArray: respuestasArray
-})
-}).then(() => {
-if (statusEl) {
-                    statusEl.innerText = "✅ ¡Registro guardado con éxito en Google Sheets!";
+                })
+            }).then(() => {
+                if (statusEl) {
                     statusEl.innerText = "✅ ¡Respuestas guardadas celda por celda en Google Sheets!";
-statusEl.style.color = "#10B981";
-}
-}).catch(() => { 
-if (statusEl) {
-statusEl.innerText = "✅ ¡Registro enviado a la hoja de cálculo!"; 
-statusEl.style.color = "#10B981"; 
-}
-});
-}
-</script>
+                    statusEl.style.color = "#10B981";
+                }
+            }).catch(() => { 
+                if (statusEl) {
+                    statusEl.innerText = "✅ ¡Registro enviado a la hoja de cálculo!"; 
+                    statusEl.style.color = "#10B981"; 
+                }
+            });
+        }
+    </script>
 </body>
 </html>
