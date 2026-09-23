@@ -42,7 +42,7 @@
 </head>
 <body class="bg-slate-900 text-slate-100 font-inter min-h-screen flex flex-col justify-between" onload="initApp()">
 
-    <!-- ENCABEZADO / HEADER -->
+    <!-- ENCABEZADO -->
     <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700 p-4 sticky top-0 z-50">
         <div class="max-w-4xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-3">
@@ -67,13 +67,13 @@
     <!-- CONTENIDO PRINCIPAL -->
     <main class="max-w-4xl mx-auto w-full p-4 flex-grow flex flex-col justify-center">
 
-        <!-- PANTALLA CARGANDO INICIAL -->
+        <!-- PANTALLA CARGANDO -->
         <section id="loading-screen" class="text-center py-16 space-y-4">
             <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-400 border-t-transparent"></div>
             <p class="text-slate-300 font-semibold text-lg">Cargando preguntas desde Google Sheets...</p>
         </section>
 
-        <!-- PANTALLA 1: REGISTRO Y SELECCIÓN DE NIVEL -->
+        <!-- PANTALLA 1: REGISTRO -->
         <section id="registration-screen" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
             <div class="text-center space-y-2">
                 <h2 class="font-orbitron text-2xl md:text-3xl font-bold text-slate-100">Registro de Piloto</h2>
@@ -142,7 +142,6 @@
 
         <!-- PANTALLA 2: JUEGO EN VIVO -->
         <section id="game-screen" class="hidden space-y-6">
-            <!-- PISTA DE CARRERAS -->
             <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl">
                 <div class="flex justify-between text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
                     <span>Línea de Salida</span>
@@ -157,7 +156,6 @@
                 </div>
             </div>
 
-            <!-- TARJETA DE PREGUNTA -->
             <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
                 <div class="flex justify-between items-center text-xs font-bold text-amber-400 uppercase tracking-widest">
                     <span id="question-number">Pregunta 1 de 10</span>
@@ -168,7 +166,6 @@
                     Cargando pregunta...
                 </h3>
 
-                <!-- OPCIONES DE RESPUESTA -->
                 <div id="options-container" class="grid grid-cols-1 gap-3"></div>
             </div>
         </section>
@@ -184,7 +181,6 @@
                 <p id="player-congrats" class="text-slate-300 font-semibold">¡Excelente desempeño en la pista!</p>
             </div>
 
-            <!-- TABLERO DE MÉTRICAS -->
             <div class="grid grid-cols-3 gap-4 max-w-md mx-auto bg-slate-900 border border-slate-700 rounded-xl p-4">
                 <div>
                     <div class="text-xs text-slate-400 uppercase font-bold">Aciertos</div>
@@ -200,17 +196,14 @@
                 </div>
             </div>
 
-            <!-- TARJETA MENSAJE DINÁMICO POR PORCENTAJE -->
             <div id="feedback-card" class="max-w-md mx-auto p-4 rounded-xl border text-center transition-all">
                 <p id="feedback-message" class="text-sm md:text-base font-semibold">Cargando retroalimentación...</p>
             </div>
 
-            <!-- ESTADO DE ENVÍO -->
             <div id="sending-status" class="text-sm font-semibold text-slate-400 pt-2">
                 ⏳ Guardando resultado en Google Sheets...
             </div>
 
-            <!-- SECCIÓN DE REVISIÓN Y REFORZAMIENTO -->
             <div class="text-left space-y-4 pt-4 border-t border-slate-700">
                 <div class="flex items-center space-x-2 text-slate-200">
                     <i data-lucide="book-open-check" class="w-5 h-5 text-amber-400"></i>
@@ -230,13 +223,11 @@
 
     </main>
 
-    <!-- PIE DE PÁGINA -->
     <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800">
         Sistema de Evaluación y Calibración Operativa • Gestión de Calidad
     </footer>
 
     <script>
-        // URL DE DESPLIEGUE EN GOOGLE APPS SCRIPT
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzm_M7yKIGQVXPpFGVc-NSoCBTpa_hvtCZ_y1H4rhieXcboqEE_kRNCc4RS2zJ3w-C1HA/exec";
 
         let allQuestions = [];
@@ -272,21 +263,15 @@
 
         async function initApp() {
             try {
-                // Manejo de la redirección 302 de Google Apps Script con redirect: 'follow'
                 const response = await fetch(SCRIPT_URL, { redirect: 'follow' });
-                
-                if (!response.ok) {
-                    throw new Error("Respuesta de red no OK");
-                }
+                if (!response.ok) throw new Error("Respuesta de red no OK");
 
                 allQuestions = await response.json();
-
                 if (!Array.isArray(allQuestions) || allQuestions.length === 0) {
-                    throw new Error("No se encontraron preguntas válidas en la hoja.");
+                    throw new Error("No se encontraron preguntas válidas.");
                 }
-
             } catch (error) {
-                console.warn("No se pudo obtener la base desde Google Sheets, utilizando banco de respaldo:", error);
+                console.warn("Usando catálogo de respaldo:", error);
                 allQuestions = [
                     {
                         q: "¿Cuál es el tiempo máximo permitido para dejar en espera a un cliente según el estándar de Calidad?",
@@ -338,7 +323,11 @@
                 activeQuestions = allQuestions;
             }
 
+            // Reinicio de puntuación y de historial
+            score = 0;
+            currentQuestionIndex = 0;
             userAnswersHistory = [];
+
             document.getElementById('registration-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('game-stats').classList.remove('hidden');
@@ -360,6 +349,7 @@
         function renderQuestion() {
             const q = activeQuestions[currentQuestionIndex];
 
+            // Actualización sincrónica del contador superior
             document.getElementById('question-number').innerText = `Pregunta ${currentQuestionIndex + 1} de ${activeQuestions.length}`;
             document.getElementById('score-display').innerText = `${score}/${activeQuestions.length}`;
             document.getElementById('question-text').innerText = q.q;
@@ -400,6 +390,9 @@
                 playSound(200, 0.2);
             }
 
+            // Actualización inmediata del contador tras seleccionar
+            document.getElementById('score-display').innerText = `${score}/${activeQuestions.length}`;
+
             currentQuestionIndex++;
 
             if (currentQuestionIndex < activeQuestions.length) {
@@ -417,6 +410,7 @@
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('results-screen').classList.remove('hidden');
 
+            // Cálculo preciso de aciertos sobre el total de preguntas activas
             const accuracy = Math.round((score / activeQuestions.length) * 100);
 
             document.getElementById('player-congrats').innerText = `¡Felicidades, ${playerData.name}! Has completado el circuito.`;
