@@ -236,8 +236,8 @@
     </footer>
 
     <script>
-        // 1. URL DE TU DEPLOY EN GOOGLE APPS SCRIPT
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzD84_MI4Bt4oVEq5qZbAK2aDBdOfY1r6tDBwcEbVrX0u6f647Ry3qZURQxB9GdmN8AIw/exec";
+        // URL DE DESPLIEGUE EN GOOGLE APPS SCRIPT
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzm_M7yKIGQVXPpFGVc-NSoCBTpa_hvtCZ_y1H4rhieXcboqEE_kRNCc4RS2zJ3w-C1HA/exec";
 
         let allQuestions = [];
         let activeQuestions = [];
@@ -275,6 +275,10 @@
                 const response = await fetch(SCRIPT_URL);
                 allQuestions = await response.json();
 
+                if (!Array.isArray(allQuestions) || allQuestions.length === 0) {
+                    throw new Error("Respuesta inválida o sin preguntas.");
+                }
+
                 const total = allQuestions.length;
 
                 const basicCount = Math.max(1, Math.round(total * 0.30));
@@ -288,7 +292,8 @@
                 document.getElementById('registration-screen').classList.remove('hidden');
 
             } catch (error) {
-                alert("Error al conectar con Google Sheets. Revisa tu URL de despliegue.");
+                console.error("Error al cargar desde Apps Script:", error);
+                alert("Error al conectar con Google Sheets. Verifica que hayas publicado una Nueva Versión en Apps Script con acceso a 'Cualquier persona'.");
             }
         }
 
